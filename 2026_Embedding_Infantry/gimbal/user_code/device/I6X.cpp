@@ -5,6 +5,8 @@
 
 I6X i6x;
 
+static uint8_t i6x_rx_dma_buffer[I6X_RX_BUFFER_SIZE] __attribute__((section(".dma_buffer"), aligned(32)));
+
 static int16_t i6x_map_to_660(int16_t val)
 {
     if (val >= 0)
@@ -29,6 +31,16 @@ static int8_t i6x_to_switch(int16_t val)
     }
 
     return I6X_SW_MID;
+}
+
+static int8_t i6x_to_two_position_switch(int16_t val)
+{
+    if (val < 0)
+    {
+        return I6X_SW_2POS_UP;
+    }
+
+    return I6X_SW_2POS_DOWN;
 }
 
 static int16_t i6x_unpack_channel(const uint8_t *sbus_data, uint8_t index)
@@ -104,6 +116,26 @@ static void i6x_clear_command(I6X_Chassis_cmd_t *chassis_cmd)
     chassis_cmd->mode = I6X_CHASSIS_ZERO_FORCE;
 }
 
+static void i6x_start_dma_receive(UART_HandleTypeDef *huart, uint8_t *rx_buffer, uint16_t rx_buffer_size)
+{
+    if (huart == NULL || rx_buffer == NULL || rx_buffer_size == 0U)
+    {
+        return;
+    }
+
+    if (huart->RxState != HAL_UART_STATE_READY)
+    {
+        HAL_UART_AbortReceive(huart);
+    }
+
+    HAL_UART_Receive_DMA(huart, rx_buffer, rx_buffer_size);
+
+    if (huart->hdmarx != NULL)
+    {
+        __HAL_DMA_DISABLE_IT(huart->hdmarx, DMA_IT_HT);
+    }
+}
+
 void I6X::init(UART_HandleTypeDef *huart, uint8_t *Rx_buf, uint16_t Rx_buf_size)
 {
     (void)Rx_buf;
@@ -112,8 +144,9 @@ void I6X::init(UART_HandleTypeDef *huart, uint8_t *Rx_buf, uint16_t Rx_buf_size)
     memset(&last_i6x_rc_ctrl, 0, sizeof(last_i6x_rc_ctrl));
     i6x_clear_command(&chassis_cmd);
 
+    this->Rx_Buffer = i6x_rx_dma_buffer;
     this->Rx_Buffer_Size = Rx_buf_size;
-    UART_Init(huart, this->Rx_Buffer, this->Rx_Buffer_Size);
+    i6x_start_dma_receive(huart, this->Rx_Buffer, this->Rx_Buffer_Size);
 }
 
 const I6X_RC_ctrl_t *I6X::get_i6x_remote_control_point()
@@ -140,10 +173,10 @@ void I6X::unpack(uint32_t now_ms)
         i6x_rc_ctrl.rc.ch[i] = i6x_map_to_660(i6x_unpack_channel(Rx_Buffer, i));
     }
 
-    i6x_rc_ctrl.rc.s[0] = i6x_to_switch(i6x_unpack_channel(Rx_Buffer, 6));
-    i6x_rc_ctrl.rc.s[1] = i6x_to_switch(i6x_unpack_channel(Rx_Buffer, 7));
+    i6x_rc_ctrl.rc.s[0] = i6x_to_two_position_switch(i6x_unpack_channel(Rx_Buffer, 6));
+    i6x_rc_ctrl.rc.s[1] = i6x_to_two_position_switch(i6x_unpack_channel(Rx_Buffer, 7));
     i6x_rc_ctrl.rc.s[2] = i6x_to_switch(i6x_unpack_channel(Rx_Buffer, 8));
-    i6x_rc_ctrl.rc.s[3] = i6x_to_switch(i6x_unpack_channel(Rx_Buffer, 9));
+    i6x_rc_ctrl.rc.s[3] = i6x_to_two_position_switch(i6x_unpack_channel(Rx_Buffer, 9));
 
     i6x_rc_ctrl.rc.frame_lost = (Rx_Buffer[23] >> 2) & 0x01;
     i6x_rc_ctrl.rc.failsafe = (Rx_Buffer[23] >> 3) & 0x01;
@@ -167,7 +200,6 @@ void I6X::update_command()
 {
     int16_t vx_channel;
     int16_t vy_channel;
-    int16_t wz_channel;
 
     if (i6x_rc_ctrl.online == 0 ||
         i6x_rc_ctrl.rc.failsafe != 0)
@@ -194,9 +226,26 @@ void I6X::update_command()
 
     vx_channel = i6x_deadband_limit(i6x_rc_ctrl.rc.ch[I6X_CHASSIS_VX_CH], I6X_RC_DEADBAND);
     vy_channel = i6x_deadband_limit(i6x_rc_ctrl.rc.ch[I6X_CHASSIS_VY_CH], I6X_RC_DEADBAND);
-    wz_channel = i6x_deadband_limit(i6x_rc_ctrl.rc.ch[I6X_CHASSIS_WZ_CH], I6X_RC_DEADBAND);
 
     chassis_cmd.vx = i6x_norm_ch(vx_channel) * I6X_CHASSIS_MAX_VX;
     chassis_cmd.vy = i6x_norm_ch(vy_channel) * I6X_CHASSIS_MAX_VY;
-    chassis_cmd.wz = i6x_norm_ch(wz_channel) * I6X_CHASSIS_MAX_WZ;
+    chassis_cmd.wz = 0.0f;
+}
+
+extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == UART_I6X)
+    {
+        i6x.unpack(HAL_GetTick());
+
+        i6x_start_dma_receive(I6X_UART, i6x.Rx_Buffer, i6x.Rx_Buffer_Size);
+    }
+}
+
+extern "C" void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == UART_I6X)
+    {
+        i6x_start_dma_receive(I6X_UART, i6x.Rx_Buffer, i6x.Rx_Buffer_Size);
+    }
 }
