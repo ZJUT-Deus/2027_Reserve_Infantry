@@ -640,26 +640,6 @@
           <GroupName>User</GroupName>
           <Files>
             <File>
-              <FileName>pid.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\User\Algorithm\Src\pid.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>chassis_task.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\User\Application\Src\chassis_task.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>communicate_task.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\User\Application\Src\communicate_task.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_fdcan.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\User\Bsp\Src\bsp_fdcan.cpp</FilePath>
-            </File>
-            <File>
               <FileName>user_lib.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Component\Src\user_lib.cpp</FilePath>
@@ -688,6 +668,26 @@
               <FileName>Can_receive.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Protocol\Src\Can_receive.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>pid.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Algorithm\Src\pid.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>chassis_task.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Application\Src\chassis_task.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>communicate_task.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Application\Src\communicate_task.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_fdcan.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Bsp\Src\bsp_fdcan.cpp</FilePath>
             </File>
           </Files>
         </Group>

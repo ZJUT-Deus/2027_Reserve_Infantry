@@ -1,0 +1,37 @@
+# Keil MDK build output
+MDK-ARM/build/
+MDK-ARM/*.uvguix.*
+MDK-ARM/DebugConfig/
+MDK-ARM/Listings/
+MDK-ARM/Objects/
+MDK-ARM/RTE/
+
+# Keil MDK user options (IDE layout / local state)
+MDK-ARM/*.uvoptx
+
+# compiled output
+*.o
+*.d
+*.crf
+*.d
+*.dep
+*.o
+*.axf
+*.elf
+*.hex
+*.bin
+*.htm
+*.lnp
+*.lst
+*.map
+*.iex
+*.sct
+*.tmp
+*.bak
+*.uvgui.*
+
+# editor / OS
+*.swp
+*~
+.DS_Store
+Thumbs.db

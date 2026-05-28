@@ -21,9 +21,9 @@ version:1.0
 
 ## 接线与对频示意
 
-![iA6B 接收机 SBUS 接口与连接示意](images/i6x_receiver_sbus_binding.png)
+![iA6B 接收机 SBUS 接口与连接示意](Img/i6x_receiver_sbus_binding.png)
 
-![FS-i6X 遥控器对码操作](images/i6x_transmitter_binding.png)
+![FS-i6X 遥控器对码操作](Img/i6x_transmitter_binding.png)
 
 ## 接入方式
 
