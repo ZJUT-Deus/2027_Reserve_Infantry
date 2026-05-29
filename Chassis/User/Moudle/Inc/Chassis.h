@@ -100,7 +100,10 @@ public:
     fp32 user_vy_set;   /**< 用户指令 Vy */
     fp32 user_wz_set;   /**< 用户指令 Wz */
 
+    bool motor_enabled;  /**< 电机使能状态标志 */
+
     void init();
+    void startup_check();
     void feedback_update();
     void set_control();
     void solve();

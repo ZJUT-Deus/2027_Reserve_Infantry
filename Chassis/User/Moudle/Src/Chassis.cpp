@@ -7,6 +7,7 @@
 
 #include "Chassis.h"
 #include "bsp_fdcan.h"
+#include "I6X.h"
 
 Chassis chassis;
 
@@ -24,7 +25,7 @@ static const uint16_t CHASSIS_CAN_MST_ID[4] = {
 };
 
 /**
- * @brief  底盘初始化, 配置 4 个 DM3519 电机并初始化速度环 PID
+ * @brief  底盘初始化, 先失能所有电机, 配置 DM3519 并初始化速度环 PID
  */
 void Chassis::init()
 {
@@ -35,9 +36,11 @@ void Chassis::init()
     user_vy_set = 0.0f;
     user_wz_set = 0.0f;
 
+    motor_enabled = false;
+
     for (int i = 0; i < 4; i++)
     {
-        can_receive.CTRL_DM3519(CHASSIS_CAN_ID[i], ENABLE);
+        can_receive.CTRL_DM3519(CHASSIS_CAN_ID[i], DISABLE);
         chassis_motive_motor[i] = DM3519(CHASSIS_CAN_ID[i],
                                  CHASSIS_CAN_MST_ID[i],
                                  can_receive.get_chassis_motor_measure_point(i));
@@ -65,6 +68,34 @@ void Chassis::init()
     z.max_speed = NORMAL_MAX_CHASSIS_SPEED_Z;
 
     feedback_update();
+}
+
+/**
+ * @brief  上电安全检查, 遥控器在线且拨杆在安全位后才使能电机
+ */
+void Chassis::startup_check()
+{
+    if (motor_enabled)
+    {
+        return;
+    }
+
+    if (i6x.i6x_rc_ctrl.online == 0)
+    {
+        return;
+    }
+
+    if (i6x.chassis_cmd.enable == 1)
+    {
+        return;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        can_receive.CTRL_DM3519(CHASSIS_CAN_ID[i], ENABLE);
+    }
+
+    motor_enabled = true;
 }
 
 /**
@@ -128,6 +159,11 @@ void Chassis::solve()
  */
 void Chassis::output()
 {
+    if (!motor_enabled)
+    {
+        return;
+    }
+
     if (chassis_behaviour_mode == CHASSIS_ZERO_FORCE)
     {
         for (int i = 0; i < 4; i++)
@@ -319,6 +355,7 @@ void chassis_stop(void)
  */
 void chassis_control_loop(void)
 {
+    chassis.startup_check();
     chassis.feedback_update();
     chassis.set_control();
     chassis.solve();
