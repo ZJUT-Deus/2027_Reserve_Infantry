@@ -13,6 +13,8 @@ Communicate communicate;
 
 static uint8_t  rx_data[8] = {0};
 static uint16_t rx_id;
+static uint8_t  rx2_data[8] = {0};
+static uint16_t rx2_id;
 
 /**
  * @brief  通信模块初始化
@@ -114,6 +116,25 @@ void fdcan1_rx_callback(void)
         break;
     case CHASSIS_BL_MST_ID:
         can_receive.get_chassis_motor_measure(&can_receive.chassis_motor_measure[3], rx_data);
+        break;
+    default:
+        break;
+    }
+}
+
+/**
+ * @brief  FDCAN2 接收回调, 处理 C610 拨弹电机反馈数据
+ */
+void fdcan2_rx_callback(void)
+{
+    std::memset(rx2_data, 0, sizeof(rx2_data));
+    if (fdcanx_receive(&TOP_CAN, rx2_data, &rx2_id) == 0)
+        return;
+
+    switch (rx2_id)
+    {
+    case C610_TRIGGER_MST_ID:
+        can_receive.get_c610_motor_measure(&can_receive.trigger_motor_measure, rx2_data);
         break;
     default:
         break;

@@ -88,3 +88,42 @@ void DM3519::update_measure()
 {
     speed = uint_to_float(measure->v_int, -tmp.vmax, tmp.vmax, 12);
 }
+
+/**
+ * @brief  C615 初始化, 绑定PWM通道并输出中立脉宽
+ * @param  channel TIM通道号
+ */
+void C615::init(uint32_t channel)
+{
+    tim_channel = channel;
+    max_speed = 500.0f;
+    pwm_set_pulse(channel, C615_PULSE_MID);
+}
+
+/**
+ * @brief  C615 无CAN反馈, 速度直接取设定值 (开环)
+ */
+void C615::update_measure()
+{
+    speed = speed_set;
+}
+
+/**
+ * @brief  C610 初始化, 绑定CAN ID和反馈数据指针
+ * @param  id  电机 CAN ID
+ * @param  m   C610 反馈数据指针
+ */
+void C610::init(uint16_t id, const c610_motor_measure_t *m)
+{
+    can_id  = id;
+    measure = m;
+}
+
+/**
+ * @brief  从 C610 CAN 反馈更新电机速度 (rpm -> rad/s)
+ */
+void C610::update_measure()
+{
+    speed = (fp32)measure->speed_rpm * 0.104719755f; // rpm * 2*PI/60
+}
+

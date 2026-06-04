@@ -12,6 +12,7 @@
 #include "main.h"
 #include "pid.h"
 #include "user_lib.h"
+#include "bsp_pwm.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +34,15 @@ typedef struct
     fp32 Tmos;      /**< MOS 管温度 */
     fp32 Tcoil;     /**< 线圈温度 */
 } dm_motor_measure_t;
+
+/** @brief C610 电机 CAN 反馈数据 (8字节) */
+typedef struct
+{
+    uint16_t angle;         /**< 机械角度 (0-8191) */
+    int16_t  speed_rpm;     /**< 转速 (rpm) */
+    int16_t  torque_current; /**< 转矩电流 */
+    uint8_t  temp;          /**< 温度 */
+} c610_motor_measure_t;
 
 /** @brief 电机物理参数限制 */
 typedef struct
@@ -91,6 +101,33 @@ public:
         : Motor(id), mst_id(mst_id), measure(measure) {}
 
     void DM3519_Init();
+    void update_measure();
+};
+
+/** @brief C615 电调电机 (PWM控制, 无反馈) */
+class C615 : public Motor
+{
+public:
+    uint32_t tim_channel;   /**< PWM通道 */
+    fp32 max_speed;         /**< 最大转速 (rad/s) */
+
+    C615() : Motor(), tim_channel(0), max_speed(0.0f) {}
+    C615(uint32_t channel) : Motor(0), tim_channel(channel), max_speed(0.0f) {}
+
+    void init(uint32_t channel);
+    void update_measure();
+};
+
+/** @brief C610 电机 (CAN电流控制, 拨弹轮) */
+class C610 : public Motor
+{
+public:
+    const c610_motor_measure_t *measure;  /**< C610 CAN 反馈数据指针 */
+
+    C610() : Motor(), measure(NULL) {}
+    C610(uint16_t id, const c610_motor_measure_t *m) : Motor(id), measure(m) {}
+
+    void init(uint16_t id, const c610_motor_measure_t *m);
     void update_measure();
 };
 

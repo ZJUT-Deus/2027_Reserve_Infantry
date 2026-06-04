@@ -23,6 +23,7 @@
 #include "dma.h"
 #include "fdcan.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -100,6 +101,7 @@ int main(void)
   MX_FDCAN2_Init();
   MX_SPI6_Init();
   MX_UART5_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   can_bsp_init();
   i6x_remote_init();

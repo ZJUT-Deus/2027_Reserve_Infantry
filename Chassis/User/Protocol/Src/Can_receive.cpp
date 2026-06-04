@@ -100,3 +100,44 @@ const dm_motor_measure_t *Can_receive::get_chassis_motor_measure_point(uint8_t i
 {
     return &chassis_motor_measure[i];
 }
+
+/**
+ * @brief  解析 C610 电机 CAN 反馈数据帧 (8字节)
+ * @param  motor C610 测量数据结构体指针
+ * @param  data  CAN 接收数据 (8 字节)
+ */
+void Can_receive::get_c610_motor_measure(c610_motor_measure_t *motor, uint8_t data[8])
+{
+    motor->angle          = ((uint16_t)data[0] << 8) | data[1];
+    motor->speed_rpm      = ((int16_t)data[2] << 8) | data[3];
+    motor->torque_current = ((int16_t)data[4] << 8) | data[5];
+    motor->temp           = data[6];
+}
+
+/**
+ * @brief  获取拨弹电机测量数据指针
+ * @return C610 测量数据结构体指针
+ */
+const c610_motor_measure_t *Can_receive::get_c610_motor_measure_point(void)
+{
+    return &trigger_motor_measure;
+}
+
+/**
+ * @brief  C610 电机电流控制指令
+ * @param  current 目标电流值 (范围 -10000 ~ +10000)
+ * @param  id      电机 CAN ID
+ */
+void Can_receive::can_cmd_c610_motor(int16_t current, uint16_t id)
+{
+    can_send_data[0] = (current >> 8) & 0xFF;
+    can_send_data[1] = current & 0xFF;
+    can_send_data[2] = 0x00;
+    can_send_data[3] = 0x00;
+    can_send_data[4] = 0x00;
+    can_send_data[5] = 0x00;
+    can_send_data[6] = 0x00;
+    can_send_data[7] = 0x00;
+
+    fdcanx_send_data(&TOP_CAN, id, can_send_data, sizeof(can_send_data));
+}

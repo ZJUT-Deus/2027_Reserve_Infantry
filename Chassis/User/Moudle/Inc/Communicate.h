@@ -30,6 +30,7 @@ extern Communicate communicate;
 extern Chassis chassis;
 
 void fdcan1_rx_callback(void);
+void fdcan2_rx_callback(void);
 uint8_t communicate_send(uint16_t id, uint8_t *data, uint32_t len);
 
 #endif

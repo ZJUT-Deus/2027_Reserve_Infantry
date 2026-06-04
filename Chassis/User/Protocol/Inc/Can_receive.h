@@ -20,6 +20,8 @@ extern "C" {
 
 /** @brief 底盘 CAN 总线句柄 */
 #define CHASSIS_CAN hfdcan1
+/** @brief 云台+发射 CAN 总线句柄 */
+#define TOP_CAN     hfdcan2
 /** @brief 电机使能 */
 #define ENABLE  0x01
 /** @brief 电机失能 */
@@ -43,6 +45,13 @@ typedef enum
     CHASSIS_BL_MST_ID = 0x14,   /**< 左后轮 Master ID */
 } motor_mst_id_t;
 
+/** @brief C610 拨弹电机 CAN ID 枚举 */
+typedef enum
+{
+    C610_TRIGGER_CAN_ID = 0x201,  /**< 拨弹电机 CAN ID (ID=1) */
+    C610_TRIGGER_MST_ID = 0x211,  /**< 拨弹电机反馈 Master ID */
+} c610_can_id_t;
+
 #ifdef __cplusplus
 }
 #endif
@@ -52,12 +61,17 @@ class Can_receive
 {
 public:
     dm_motor_measure_t chassis_motor_measure[4];    /**< 四轮电机反馈数据 */
+    c610_motor_measure_t trigger_motor_measure;     /**< 拨弹电机反馈数据 */
     uint8_t can_send_data[8];                       /**< CAN 发送缓冲区 */
 
     void get_chassis_motor_measure(dm_motor_measure_t *motor, uint8_t data[8]);
     const dm_motor_measure_t *get_chassis_motor_measure_point(uint8_t i);
     void can_cmd_mit_dm_motor(fp32 pos, fp32 vel, fp32 Kp, fp32 Kd, fp32 tor, uint16_t id, esc_inf_t tmp);
     void CTRL_DM3519(uint16_t id, uint16_t state);
+
+    void get_c610_motor_measure(c610_motor_measure_t *motor, uint8_t data[8]);
+    const c610_motor_measure_t *get_c610_motor_measure_point(void);
+    void can_cmd_c610_motor(int16_t current, uint16_t id);
 };
 
 extern Can_receive can_receive;
