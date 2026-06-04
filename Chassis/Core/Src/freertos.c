@@ -61,14 +61,21 @@ osThreadId_t ChassisTaskHandle;
 const osThreadAttr_t ChassisTask_attributes = {
   .name = "ChassisTask",
   .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityHigh,
 };
 /* Definitions for CommunicateTask */
 osThreadId_t CommunicateTaskHandle;
 const osThreadAttr_t CommunicateTask_attributes = {
   .name = "CommunicateTask",
   .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for ShootTask */
+osThreadId_t ShootTaskHandle;
+const osThreadAttr_t ShootTask_attributes = {
+  .name = "ShootTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -79,6 +86,7 @@ const osThreadAttr_t CommunicateTask_attributes = {
 void StartDefaultTask(void *argument);
 extern void Chassis_Task(void *argument);
 extern void Communicate_Task(void *argument);
+extern void Shoot_Task(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -117,6 +125,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of CommunicateTask */
   CommunicateTaskHandle = osThreadNew(Communicate_Task, NULL, &CommunicateTask_attributes);
+
+  /* creation of ShootTask */
+  ShootTaskHandle = osThreadNew(Shoot_Task, NULL, &ShootTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
