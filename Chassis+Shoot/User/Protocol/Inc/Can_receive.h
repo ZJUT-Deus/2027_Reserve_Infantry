@@ -1,6 +1,6 @@
 /**
  * @file    Can_receive.h
- * @brief   CAN 总线数据接收与电机控制 (DM3519 协议)
+ * @brief   CAN 总线数据接收与电机控制 (DM3519/C610/GM6020 协议)
  * @author  kk
  * @date    2026-05-22
  */
@@ -53,6 +53,15 @@ typedef enum
 #define C610_CONTROL_TRIGGER_ID   0x200U  /**< C610 控制帧 (电机1-4) */
 #define C610_FEEDBACK_TRIGGER_ID  0x202U  /**< C610 反馈帧 (0x200 + ID2) */
 
+/** @brief GM6020 云台电机 CAN ID 枚举 */
+typedef enum
+{
+    GIMBAL_YAW_CAN_ID     = 0x205, /**< yaw 电机反馈 ID (电机 ID=1) */
+    GIMBAL_PITCH_CAN_ID   = 0x209, /**< pitch 电机反馈 ID (电机 ID=5) */
+    GIMBAL_CMD_CAN_ID_1_4 = 0x1FF, /**< GM6020 ID 1~4 控制帧 */
+    GIMBAL_CMD_CAN_ID_5_7 = 0x2FF, /**< GM6020 ID 5~7 控制帧 */
+} gimbal_can_id_t;
+
 #ifdef __cplusplus
 }
 #endif
@@ -63,6 +72,7 @@ class Can_receive
 public:
     dm_motor_measure_t chassis_motor_measure[4];    /**< 四轮电机反馈数据 */
     c610_motor_measure_t trigger_motor_measure;     /**< 拨弹电机反馈数据 */
+    dji_motor_measure_t gimbal_motor_measure[2];    /**< 云台 GM6020 反馈数据: 0 yaw, 1 pitch */
     uint8_t can_send_data[8];                       /**< CAN 发送缓冲区 */
 
     void get_chassis_motor_measure(dm_motor_measure_t *motor, uint8_t data[8]);
@@ -73,6 +83,10 @@ public:
     void get_c610_motor_measure(c610_motor_measure_t *motor, uint8_t data[8]);
     const c610_motor_measure_t *get_c610_motor_measure_point(void);
     void can_cmd_c610_motor(int16_t current);
+
+    void get_dji_motor_measure(dji_motor_measure_t *motor, uint8_t data[8]);
+    const dji_motor_measure_t *get_gimbal_motor_measure_point(uint8_t i);
+    void can_cmd_gimbal_motor(int16_t yaw_current, int16_t pitch_current);
 };
 
 extern Can_receive can_receive;

@@ -1,6 +1,6 @@
 /**
  * @file    Can_receive.cpp
- * @brief   CAN总线数据接收与解析实现 (DM3519 电机)
+ * @brief   CAN总线数据接收与解析实现 (DM3519/C610/GM6020 电机)
  * @author  kk
  * @date    2026-05-22
  */
@@ -110,8 +110,8 @@ const dm_motor_measure_t *Can_receive::get_chassis_motor_measure_point(uint8_t i
 void Can_receive::get_c610_motor_measure(c610_motor_measure_t *motor, uint8_t data[8])
 {
     motor->angle          = ((uint16_t)data[0] << 8) | data[1];
-    motor->speed_rpm      = ((int16_t)data[2] << 8) | data[3];
-    motor->torque_current = ((int16_t)data[4] << 8) | data[5];
+    motor->speed_rpm      = (int16_t)(((uint16_t)data[2] << 8) | data[3]);
+    motor->torque_current = (int16_t)(((uint16_t)data[4] << 8) | data[5]);
     motor->temp           = data[6];
 }
 
@@ -138,4 +138,50 @@ void Can_receive::can_cmd_c610_motor(int16_t current)
     can_send_data[3] = (uint8_t)(current & 0xFF);
 
     fdcanx_send_data(&TOP_CAN, C610_CONTROL_TRIGGER_ID, can_send_data, 8);
+}
+
+/**
+ * @brief  解析 DJI GM6020 电机 CAN 反馈数据帧 (8字节)
+ * @param  motor GM6020 测量数据结构体指针
+ * @param  data  CAN 接收数据 (8 字节)
+ */
+void Can_receive::get_dji_motor_measure(dji_motor_measure_t *motor, uint8_t data[8])
+{
+    motor->last_ecd       = motor->ecd;
+    motor->ecd            = ((uint16_t)data[0] << 8) | data[1];
+    motor->speed_rpm      = (int16_t)(((uint16_t)data[2] << 8) | data[3]);
+    motor->given_current  = (int16_t)(((uint16_t)data[4] << 8) | data[5]);
+    motor->temperate      = data[6];
+    motor->last_update_ms = HAL_GetTick();
+    motor->online         = 1U;
+}
+
+/**
+ * @brief  获取云台 GM6020 测量数据指针
+ * @param  i 电机索引 (0: yaw, 1: pitch)
+ * @return GM6020 测量数据结构体指针
+ */
+const dji_motor_measure_t *Can_receive::get_gimbal_motor_measure_point(uint8_t i)
+{
+    return &gimbal_motor_measure[i];
+}
+
+/**
+ * @brief  GM6020 云台电机电流控制指令
+ * @param  yaw_current   yaw 电机电流, ID=1, 发送到 0x1FF 第 1 路
+ * @param  pitch_current pitch 电机电流, ID=5, 发送到 0x2FF 第 1 路
+ */
+void Can_receive::can_cmd_gimbal_motor(int16_t yaw_current, int16_t pitch_current)
+{
+    uint8_t data_1_4[8] = {0};
+    uint8_t data_5_7[8] = {0};
+
+    data_1_4[0] = (yaw_current >> 8) & 0xFF;
+    data_1_4[1] = yaw_current & 0xFF;
+
+    data_5_7[0] = (pitch_current >> 8) & 0xFF;
+    data_5_7[1] = pitch_current & 0xFF;
+
+    fdcanx_send_data(&TOP_CAN, GIMBAL_CMD_CAN_ID_1_4, data_1_4, sizeof(data_1_4));
+    fdcanx_send_data(&TOP_CAN, GIMBAL_CMD_CAN_ID_5_7, data_5_7, sizeof(data_5_7));
 }

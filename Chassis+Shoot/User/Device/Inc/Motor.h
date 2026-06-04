@@ -1,6 +1,6 @@
 /**
  * @file    Motor.h
- * @brief   电机设备驱动模块 (DM3519)
+ * @brief   电机设备驱动模块 (DM3519/C610/C615/GM6020)
  * @author  kk
  * @date    2026-05-23
  */
@@ -20,10 +20,17 @@ extern "C" {
 
 /** @brief 速度控制模式 */
 #define SPEED 0
+/** @brief 编码器角度控制模式 */
+#define ENCODE_ANGLE 1
 /** @brief MIT 模式控制字 */
 #define MODE  0X00
 /** @brief 转速单位换算 */
 #define RPM_TO_RAD 0.104719755f
+
+/** @brief GM6020 编码器单圈范围 */
+#define DJI_GM6020_ECD_RANGE 8192U
+/** @brief GM6020 rpm 转 rad/s 系数 */
+#define DJI_GM6020_RPM_TO_RAD 0.104719755f
 
 /** @brief DM3519 电机反馈测量数据 */
 typedef struct
@@ -40,11 +47,23 @@ typedef struct
 /** @brief C610 电机 CAN 反馈数据 (8字节) */
 typedef struct
 {
-    uint16_t angle;         /**< 机械角度 (0-8191) */
-    int16_t  speed_rpm;     /**< 转速 (rpm) */
+    uint16_t angle;          /**< 机械角度 (0-8191) */
+    int16_t  speed_rpm;      /**< 转速 (rpm) */
     int16_t  torque_current; /**< 转矩电流 */
-    uint8_t  temp;          /**< 温度 */
+    uint8_t  temp;           /**< 温度 */
 } c610_motor_measure_t;
+
+/** @brief DJI GM6020 电机 CAN 反馈数据 (8字节) */
+typedef struct
+{
+    uint16_t ecd;            /**< 当前机械角度 (0-8191) */
+    uint16_t last_ecd;       /**< 上一次机械角度 */
+    int16_t  speed_rpm;      /**< 转速 (rpm) */
+    int16_t  given_current;  /**< 实际转矩电流 */
+    uint8_t  temperate;      /**< 温度 */
+    uint32_t last_update_ms; /**< 最近一次反馈时间 */
+    uint8_t  online;         /**< 在线标志 */
+} dji_motor_measure_t;
 
 /** @brief 电机物理参数限制 */
 typedef struct
@@ -74,12 +93,15 @@ typedef struct
 class Motor
 {
 public:
-    float speed;        /**< 当前转速 (rad/s) */
-    float speed_set;    /**< 目标转速 (rad/s) */
-    float current_t;    /**< 当前扭矩 (N·m) */
-    float current_give; /**< 输出扭矩指令 (N·m) */
-    uint16_t can_id;    /**< CAN 通信 ID */
-    Pid speed_pid;      /**< 速度环 PID */
+    float speed;            /**< 当前转速 (rad/s) */
+    float speed_set;        /**< 目标转速 (rad/s) */
+    float encode_angle;     /**< 当前编码器角度 (rad) */
+    float encode_angle_set; /**< 目标编码器角度 (rad) */
+    float current_t;        /**< 当前扭矩/电流环输出 */
+    float current_give;     /**< 输出控制指令 */
+    uint16_t can_id;        /**< CAN 通信 ID */
+    Pid speed_pid;          /**< 速度环 PID */
+    Pid encode_angle_pid;   /**< 编码器角度环 PID */
 
     Motor();
     Motor(uint16_t id);
@@ -103,6 +125,21 @@ public:
         : Motor(id), mst_id(mst_id), measure(measure) {}
 
     void DM3519_Init();
+    void update_measure();
+};
+
+/** @brief DJI GM6020 电机 (CAN电流控制, 编码器反馈) */
+class DJI_GM6020 : public Motor
+{
+public:
+    uint16_t offset_ecd;                 /**< 上电零点编码器值 */
+    uint16_t max_ecd;                    /**< 编码器最大值 */
+    const dji_motor_measure_t *measure;  /**< GM6020 CAN 反馈数据指针 */
+
+    DJI_GM6020();
+    DJI_GM6020(uint16_t id, const dji_motor_measure_t *measure);
+
+    fp32 ecd_to_angle(uint16_t ecd) const;
     void update_measure();
 };
 

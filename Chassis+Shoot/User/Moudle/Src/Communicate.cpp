@@ -37,7 +37,7 @@ fp32 Communicate::map_speed(fp32 rc_val, fp32 rc_max, fp32 chassis_max)
 }
 
 /**
- * @brief  处理遥控器数据, 根据在线状态和模式控制底盘运动
+ * @brief  处理遥控器数据, 根据在线状态和模式控制底盘与云台
  */
 void Communicate::handle_rc()
 {
@@ -46,8 +46,21 @@ void Communicate::handle_rc()
     if (i6x.i6x_rc_ctrl.online == 0)
     {
         chassis_stop();
+        gimbal_stop();
+        return;
     }
-    else if (i6x.chassis_cmd.enable == 0)
+
+    if (i6x.gimbal_cmd.enable == 0)
+    {
+        gimbal_stop();
+    }
+    else
+    {
+        gimbal_set_yaw_speed(i6x.gimbal_cmd.yaw_speed);
+        gimbal_set_pitch_speed(i6x.gimbal_cmd.pitch_speed);
+    }
+
+    if (i6x.chassis_cmd.enable == 0)
     {
         chassis_stop();
     }
@@ -115,7 +128,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 }
 
 /**
- * @brief  CAN 接收回调, 根据 ID 分发到对应电机测量数据结构
+ * @brief  CAN 接收回调, 根据 ID 分发到底盘电机测量数据结构
  */
 void fdcan1_rx_callback(void)
 {
@@ -143,7 +156,7 @@ void fdcan1_rx_callback(void)
 }
 
 /**
- * @brief  FDCAN2 接收回调, 处理 C610 拨弹电机反馈数据
+ * @brief  FDCAN2 接收回调, 处理云台 GM6020 与 C610 拨弹电机反馈数据
  */
 void fdcan2_rx_callback(void)
 {
@@ -155,6 +168,12 @@ void fdcan2_rx_callback(void)
     {
     case C610_FEEDBACK_TRIGGER_ID:
         can_receive.get_c610_motor_measure(&can_receive.trigger_motor_measure, rx2_data);
+        break;
+    case GIMBAL_YAW_CAN_ID:
+        can_receive.get_dji_motor_measure(&can_receive.gimbal_motor_measure[0], rx2_data);
+        break;
+    case GIMBAL_PITCH_CAN_ID:
+        can_receive.get_dji_motor_measure(&can_receive.gimbal_motor_measure[1], rx2_data);
         break;
     default:
         break;

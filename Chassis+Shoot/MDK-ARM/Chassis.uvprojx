@@ -721,6 +721,11 @@
               <FilePath>..\User\Moudle\Src\Communicate.cpp</FilePath>
             </File>
             <File>
+              <FileName>Gimbal.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Moudle\Src\Gimbal.cpp</FilePath>
+            </File>
+            <File>
               <FileName>Can_receive.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Protocol\Src\Can_receive.cpp</FilePath>
@@ -739,6 +744,11 @@
               <FileName>communicate_task.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Application\Src\communicate_task.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>gimbal_task.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Application\Src\gimbal_task.cpp</FilePath>
             </File>
             <File>
               <FileName>bsp_fdcan.cpp</FileName>

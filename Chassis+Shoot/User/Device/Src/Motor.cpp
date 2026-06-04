@@ -1,6 +1,6 @@
 /**
  * @file    Motor.cpp
- * @brief   电机设备驱动模块实现 (DM3519)
+ * @brief   电机设备驱动模块实现 (DM3519/C610/C615/GM6020)
  * @author  kk
  * @date    2026-05-23
  */
@@ -15,6 +15,8 @@ Motor::Motor() : can_id(0)
 {
     speed = 0.0f;
     speed_set = 0.0f;
+    encode_angle = 0.0f;
+    encode_angle_set = 0.0f;
     current_t = 0.0f;
     current_give = 0.0f;
 }
@@ -28,14 +30,16 @@ Motor::Motor(uint16_t id) : can_id(id)
 {
     speed = 0.0f;
     speed_set = 0.0f;
+    encode_angle = 0.0f;
+    encode_angle_set = 0.0f;
     current_t = 0.0f;
     current_give = 0.0f;
 }
 
 /**
  * @brief  设置电机目标值
- * @param  set  设定值 (速度环: rad/s)
- * @param  mode 控制模式 (SPEED)
+ * @param  set  设定值 (速度环: rad/s, 角度环: rad)
+ * @param  mode 控制模式 (SPEED/ENCODE_ANGLE)
  * @retval none
  */
 void Motor::set(fp32 set, uint8_t mode)
@@ -45,14 +49,17 @@ void Motor::set(fp32 set, uint8_t mode)
     case SPEED:
         speed_set = set;
         break;
+    case ENCODE_ANGLE:
+        encode_angle_set = set;
+        break;
     default:
         break;
     }
 }
 
 /**
- * @brief  执行 PID 计算, 输出力矩指令
- * @param  mode 控制模式 (SPEED)
+ * @brief  执行 PID 计算, 输出控制指令
+ * @param  mode 控制模式 (SPEED/ENCODE_ANGLE)
  * @retval none
  */
 void Motor::solve(uint8_t mode)
@@ -60,6 +67,11 @@ void Motor::solve(uint8_t mode)
     switch (mode)
     {
     case SPEED:
+        current_t = speed_pid.pid_calc();
+        current_give = current_t;
+        break;
+    case ENCODE_ANGLE:
+        speed_set = encode_angle_pid.pid_calc();
         current_t = speed_pid.pid_calc();
         current_give = current_t;
         break;
@@ -86,7 +98,57 @@ void DM3519::DM3519_Init()
  */
 void DM3519::update_measure()
 {
+    if (measure == NULL)
+    {
+        return;
+    }
+
     speed = uint_to_float(measure->v_int, -tmp.vmax, tmp.vmax, 12);
+}
+
+DJI_GM6020::DJI_GM6020() : Motor(), offset_ecd(0), max_ecd(DJI_GM6020_ECD_RANGE), measure(NULL)
+{
+}
+
+DJI_GM6020::DJI_GM6020(uint16_t id, const dji_motor_measure_t *measure)
+    : Motor(id), offset_ecd(0), max_ecd(DJI_GM6020_ECD_RANGE), measure(measure)
+{
+}
+
+/**
+ * @brief  将 GM6020 单圈编码器值转换为相对上电零点角度
+ * @param  ecd 当前编码器值
+ * @return 相对角度 (rad), 范围约 [-PI, PI]
+ */
+fp32 DJI_GM6020::ecd_to_angle(uint16_t ecd) const
+{
+    int32_t delta = (int32_t)ecd - (int32_t)offset_ecd;
+    int32_t half_ecd = (int32_t)max_ecd / 2;
+
+    if (delta > half_ecd)
+    {
+        delta -= (int32_t)max_ecd;
+    }
+    else if (delta < -half_ecd)
+    {
+        delta += (int32_t)max_ecd;
+    }
+
+    return (fp32)delta * (2.0f * PI) / (fp32)max_ecd;
+}
+
+/**
+ * @brief  从 GM6020 CAN 反馈更新电机速度与编码器角度
+ */
+void DJI_GM6020::update_measure()
+{
+    if (measure == NULL)
+    {
+        return;
+    }
+
+    speed = (fp32)measure->speed_rpm * DJI_GM6020_RPM_TO_RAD;
+    encode_angle = ecd_to_angle(measure->ecd);
 }
 
 /**
@@ -124,6 +186,10 @@ void C610::init(uint16_t id, const c610_motor_measure_t *m)
  */
 void C610::update_measure()
 {
-    speed = (fp32)measure->speed_rpm * RPM_TO_RAD; 
-}
+    if (measure == NULL)
+    {
+        return;
+    }
 
+    speed = (fp32)measure->speed_rpm * RPM_TO_RAD;
+}

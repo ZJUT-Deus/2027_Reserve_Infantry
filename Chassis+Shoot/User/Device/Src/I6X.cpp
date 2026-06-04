@@ -110,10 +110,22 @@ static fp32 i6x_norm_ch(int16_t val)
     return (fp32)val / (fp32)I6X_CH_VALUE_MAX;
 }
 
-static void i6x_clear_command(I6X_Chassis_cmd_t *chassis_cmd)
+static void i6x_clear_chassis_command(I6X_Chassis_cmd_t *chassis_cmd)
 {
     memset(chassis_cmd, 0, sizeof(I6X_Chassis_cmd_t));
     chassis_cmd->mode = I6X_CHASSIS_ZERO_FORCE;
+}
+
+static void i6x_clear_gimbal_command(I6X_Gimbal_cmd_t *gimbal_cmd)
+{
+    memset(gimbal_cmd, 0, sizeof(I6X_Gimbal_cmd_t));
+    gimbal_cmd->mode = I6X_GIMBAL_ZERO_FORCE;
+}
+
+static void i6x_clear_command(I6X_Chassis_cmd_t *chassis_cmd, I6X_Gimbal_cmd_t *gimbal_cmd)
+{
+    i6x_clear_chassis_command(chassis_cmd);
+    i6x_clear_gimbal_command(gimbal_cmd);
 }
 
 static void i6x_start_dma_receive(UART_HandleTypeDef *huart, uint8_t *rx_buffer, uint16_t rx_buffer_size)
@@ -142,7 +154,7 @@ void I6X::init(UART_HandleTypeDef *huart, uint8_t *Rx_buf, uint16_t Rx_buf_size)
 
     memset(&i6x_rc_ctrl, 0, sizeof(i6x_rc_ctrl));
     memset(&last_i6x_rc_ctrl, 0, sizeof(last_i6x_rc_ctrl));
-    i6x_clear_command(&chassis_cmd);
+    i6x_clear_command(&chassis_cmd, &gimbal_cmd);
 
     this->Rx_Buffer = i6x_rx_dma_buffer;
     this->Rx_Buffer_Size = Rx_buf_size;
@@ -200,36 +212,46 @@ void I6X::update_command()
 {
     int16_t vx_channel;
     int16_t vy_channel;
+    int16_t yaw_channel;
+    int16_t pitch_channel;
 
     if (i6x_rc_ctrl.online == 0 ||
         i6x_rc_ctrl.rc.failsafe != 0)
     {
-        i6x_clear_command(&chassis_cmd);
+        i6x_clear_command(&chassis_cmd, &gimbal_cmd);
         return;
     }
 
     if (i6x_switch_is_up(i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
     {
         chassis_cmd.mode = I6X_CHASSIS_TOP;
+        gimbal_cmd.mode = I6X_GIMBAL_FREE;
     }
     else if (i6x_switch_is_mid(i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
     {
         chassis_cmd.mode = I6X_CHASSIS_FREE;
+        gimbal_cmd.mode = I6X_GIMBAL_FREE;
     }
     else
     {
-        i6x_clear_command(&chassis_cmd);
+        i6x_clear_command(&chassis_cmd, &gimbal_cmd);
         return;
     }
 
     chassis_cmd.enable = 1;
+    gimbal_cmd.enable = 1;
 
     vx_channel = i6x_deadband_limit(i6x_rc_ctrl.rc.ch[I6X_CHASSIS_VX_CH], I6X_RC_DEADBAND);
     vy_channel = i6x_deadband_limit(i6x_rc_ctrl.rc.ch[I6X_CHASSIS_VY_CH], I6X_RC_DEADBAND);
+    yaw_channel = i6x_deadband_limit(i6x_rc_ctrl.rc.ch[I6X_GIMBAL_YAW_CH], I6X_RC_DEADBAND);
+    pitch_channel = i6x_deadband_limit(i6x_rc_ctrl.rc.ch[I6X_GIMBAL_PITCH_CH], I6X_RC_DEADBAND);
 
     chassis_cmd.vx = i6x_norm_ch(vx_channel) * I6X_CHASSIS_MAX_VX;
     chassis_cmd.vy = i6x_norm_ch(vy_channel) * I6X_CHASSIS_MAX_VY;
     chassis_cmd.wz = 0.0f;
+
+    gimbal_cmd.yaw_speed = i6x_norm_ch(yaw_channel) * I6X_GIMBAL_MAX_YAW_SPEED;
+    gimbal_cmd.pitch_speed = i6x_norm_ch(pitch_channel) * I6X_GIMBAL_MAX_PITCH_SPEED;
 }
 
 extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)

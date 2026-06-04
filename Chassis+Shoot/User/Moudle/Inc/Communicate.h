@@ -14,6 +14,7 @@
 #include "Can_receive.h"
 #include "Chassis.h"
 #include "Shoot.h"
+#include "Gimbal.h"
 
 /** @brief 底盘通信管理类 (CAN 收发 + 遥控器数据处理) */
 class Communicate
@@ -29,6 +30,7 @@ private:
 extern Can_receive can_receive;
 extern Communicate communicate;
 extern Chassis chassis;
+extern Gimbal gimbal;
 
 void fdcan1_rx_callback(void);
 void fdcan2_rx_callback(void);

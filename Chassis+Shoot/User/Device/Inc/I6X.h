@@ -65,6 +65,8 @@
 
 #define I6X_CHASSIS_MAX_VX      3.0f
 #define I6X_CHASSIS_MAX_VY      3.0f
+#define I6X_GIMBAL_MAX_YAW_SPEED   2.5f
+#define I6X_GIMBAL_MAX_PITCH_SPEED 1.5f
 
 typedef enum
 {
@@ -72,6 +74,12 @@ typedef enum
         I6X_CHASSIS_FREE,
         I6X_CHASSIS_TOP,
 } i6x_chassis_mode_e;
+
+typedef enum
+{
+        I6X_GIMBAL_ZERO_FORCE = 0,
+        I6X_GIMBAL_FREE,
+} i6x_gimbal_mode_e;
 
 typedef struct
 {
@@ -97,12 +105,21 @@ typedef struct
         uint8_t mode;
 } I6X_Chassis_cmd_t;
 
+typedef struct
+{
+        fp32 yaw_speed;
+        fp32 pitch_speed;
+        uint8_t enable;
+        uint8_t mode;
+} I6X_Gimbal_cmd_t;
+
 class I6X
 {
 public:
     I6X_RC_ctrl_t i6x_rc_ctrl;
     I6X_RC_ctrl_t last_i6x_rc_ctrl;
     I6X_Chassis_cmd_t chassis_cmd;
+    I6X_Gimbal_cmd_t gimbal_cmd;
 
     uint8_t *Rx_Buffer;
     uint16_t Rx_Buffer_Size;

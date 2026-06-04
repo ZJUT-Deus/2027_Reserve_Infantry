@@ -28,6 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include "chassis_task.h"
 #include "communicate_task.h"
+#include "gimbal_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,6 +71,13 @@ const osThreadAttr_t CommunicateTask_attributes = {
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for GimbalTask */
+osThreadId_t GimbalTaskHandle;
+const osThreadAttr_t GimbalTask_attributes = {
+  .name = "GimbalTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
 /* Definitions for ShootTask */
 osThreadId_t ShootTaskHandle;
 const osThreadAttr_t ShootTask_attributes = {
@@ -86,6 +94,7 @@ const osThreadAttr_t ShootTask_attributes = {
 void StartDefaultTask(void *argument);
 extern void Chassis_Task(void *argument);
 extern void Communicate_Task(void *argument);
+extern void Gimbal_Task(void *argument);
 extern void Shoot_Task(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -126,6 +135,9 @@ void MX_FREERTOS_Init(void) {
   /* creation of CommunicateTask */
   CommunicateTaskHandle = osThreadNew(Communicate_Task, NULL, &CommunicateTask_attributes);
 
+
+  /* creation of GimbalTask */
+  GimbalTaskHandle = osThreadNew(Gimbal_Task, NULL, &GimbalTask_attributes);
   /* creation of ShootTask */
   ShootTaskHandle = osThreadNew(Shoot_Task, NULL, &ShootTask_attributes);
 
