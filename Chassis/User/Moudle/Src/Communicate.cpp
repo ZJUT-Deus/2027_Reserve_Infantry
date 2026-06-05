@@ -7,6 +7,7 @@
 
 #include "Communicate.h"
 #include "Can_receive.h"
+#include "Shoot.h"
 #include <cstring>
 
 Communicate communicate;
@@ -72,6 +73,25 @@ void Communicate::handle_rc()
     {
         chassis_stop();
     }
+
+    /* ---- 射击控制 (SW_A=摩擦轮, SW_B=连发射击, 底盘无力时强制停止) ---- */
+    if (i6x.i6x_rc_ctrl.online == 0 || i6x.chassis_cmd.enable == 0)
+    {
+        shoot_stop();
+    }
+    else if (i6x_2pos_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_SW_A])
+          && i6x_2pos_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_SW_B]))
+    {
+        shoot_continue_bullet();
+    }
+    else if (i6x_2pos_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_SW_A]))
+    {
+        shoot_ready();
+    }
+    else
+    {
+        shoot_stop();
+    }
 }
 
 /**
@@ -133,7 +153,7 @@ void fdcan2_rx_callback(void)
 
     switch (rx2_id)
     {
-    case C610_TRIGGER_MST_ID:
+    case C610_FEEDBACK_TRIGGER_ID:
         can_receive.get_c610_motor_measure(&can_receive.trigger_motor_measure, rx2_data);
         break;
     default:

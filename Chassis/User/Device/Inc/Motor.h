@@ -22,6 +22,8 @@ extern "C" {
 #define SPEED 0
 /** @brief MIT 模式控制字 */
 #define MODE  0X00
+/** @brief 转速单位换算 */
+#define RPM_TO_RAD 0.104719755f
 
 /** @brief DM3519 电机反馈测量数据 */
 typedef struct

@@ -97,7 +97,7 @@ void C615::init(uint32_t channel)
 {
     tim_channel = channel;
     max_speed = 500.0f;
-    pwm_set_pulse(channel, C615_PULSE_MID);
+    pwm_set_pulse(channel, C615_PULSE_MIN);
 }
 
 /**
@@ -124,6 +124,6 @@ void C610::init(uint16_t id, const c610_motor_measure_t *m)
  */
 void C610::update_measure()
 {
-    speed = (fp32)measure->speed_rpm * 0.104719755f; // rpm * 2*PI/60
+    speed = (fp32)measure->speed_rpm * RPM_TO_RAD; 
 }
 

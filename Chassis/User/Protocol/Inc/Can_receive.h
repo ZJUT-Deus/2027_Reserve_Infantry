@@ -45,12 +45,13 @@ typedef enum
     CHASSIS_BL_MST_ID = 0x14,   /**< 左后轮 Master ID */
 } motor_mst_id_t;
 
-/** @brief C610 拨弹电机 CAN ID 枚举 */
-typedef enum
-{
-    C610_TRIGGER_CAN_ID = 0x201,  /**< 拨弹电机 CAN ID (ID=1) */
-    C610_TRIGGER_MST_ID = 0x211,  /**< 拨弹电机反馈 Master ID */
-} c610_can_id_t;
+/** @brief C610 无刷电机 CAN 协议常量
+ *  - 控制帧: 0x200-ID/4, 每帧4电机各占2字节, 电流 -10000~10000 (-10A~10A)
+ *  - 反馈帧: 0x200+ID, 1KHz, 角度/转速/电流/温度
+ */
+#define C610_TRIGGER_MOTOR_ID     2U      /**< 拨弹轮电机 ID */
+#define C610_CONTROL_TRIGGER_ID   0x200U  /**< C610 控制帧 (电机1-4) */
+#define C610_FEEDBACK_TRIGGER_ID  0x202U  /**< C610 反馈帧 (0x200 + ID2) */
 
 #ifdef __cplusplus
 }
@@ -71,7 +72,7 @@ public:
 
     void get_c610_motor_measure(c610_motor_measure_t *motor, uint8_t data[8]);
     const c610_motor_measure_t *get_c610_motor_measure_point(void);
-    void can_cmd_c610_motor(int16_t current, uint16_t id);
+    void can_cmd_c610_motor(int16_t current);
 };
 
 extern Can_receive can_receive;

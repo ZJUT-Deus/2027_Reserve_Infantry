@@ -30,7 +30,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bsp_fdcan.h"
-
+#include "bsp_pwm.h"
 extern void i6x_remote_init(void);
 /* USER CODE END Includes */
 
@@ -105,6 +105,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   can_bsp_init();
   i6x_remote_init();
+  pwm_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */

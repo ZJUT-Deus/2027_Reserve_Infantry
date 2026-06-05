@@ -48,6 +48,9 @@ fp32 fp32_constrain(fp32 Value, fp32 minValue, fp32 maxValue);
 int16_t int16_constrain(int16_t Value, int16_t minValue, int16_t maxValue);
 fp32 loop_fp32_constrain(fp32 Input, fp32 minValue, fp32 maxValue);
 
+inline fp32 fp32_abs(fp32 x) { return (x < 0.0f) ? -x : x; }
+inline int16_t int16_abs(int16_t x) { return (x < 0) ? (int16_t)-x : x; }
+
 /** @brief 角度格式化到 [-PI, PI] 范围 */
 #define rad_format(Ang) loop_fp32_constrain((Ang), -PI, PI)
 

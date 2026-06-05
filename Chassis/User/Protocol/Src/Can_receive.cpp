@@ -6,6 +6,7 @@
  */
 
 #include "Can_receive.h"
+#include <cstring>
 
 Can_receive can_receive;
 
@@ -124,20 +125,17 @@ const c610_motor_measure_t *Can_receive::get_c610_motor_measure_point(void)
 }
 
 /**
- * @brief  C610 电机电流控制指令
- * @param  current 目标电流值 (范围 -10000 ~ +10000)
- * @param  id      电机 CAN ID
+ * @brief  C610 拨弹电机电流控制指令
+ * @note   控制帧 0x200(电机1-4)/0x1FF(电机5-8), 每电机2字节 int16
+ *         当前电机 ID=2 → 控制帧 0x200, DATA[2-3]; 其余置零
+ * @param  current 目标电流值 (-10000 ~ +10000)
  */
-void Can_receive::can_cmd_c610_motor(int16_t current, uint16_t id)
+void Can_receive::can_cmd_c610_motor(int16_t current)
 {
-    can_send_data[0] = (current >> 8) & 0xFF;
-    can_send_data[1] = current & 0xFF;
-    can_send_data[2] = 0x00;
-    can_send_data[3] = 0x00;
-    can_send_data[4] = 0x00;
-    can_send_data[5] = 0x00;
-    can_send_data[6] = 0x00;
-    can_send_data[7] = 0x00;
+    std::memset(can_send_data, 0, sizeof(can_send_data));
 
-    fdcanx_send_data(&TOP_CAN, id, can_send_data, sizeof(can_send_data));
+    can_send_data[2] = (uint8_t)((current >> 8) & 0xFF);
+    can_send_data[3] = (uint8_t)(current & 0xFF);
+
+    fdcanx_send_data(&TOP_CAN, C610_CONTROL_TRIGGER_ID, can_send_data, 8);
 }

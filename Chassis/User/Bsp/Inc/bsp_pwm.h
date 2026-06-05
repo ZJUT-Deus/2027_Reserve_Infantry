@@ -20,9 +20,11 @@ extern "C" {
 #define PWM_C615_FRICTION_R  TIM_CHANNEL_3  /**< 右摩擦轮, PE13 */
 
 /** C615电调脉宽范围 (tick, 1MHz定时器) */
-#define C615_PULSE_MIN  1000  /**< 1.0ms, 全速反转 */
-#define C615_PULSE_MAX  2000  /**< 2.0ms, 全速正转 */
-#define C615_PULSE_MID  1500  /**< 1.5ms, 停止     */
+#define C615_PULSE_MIN  400   /**< 0.4ms, 停止 / 上电自检基准 */
+#define C615_PULSE_MAX  2000  /**< 2.0ms, 全速 */
+
+/** C615 上电自检时间 (ms), 电调需要在此期间持续检测到最小脉宽 */
+#define C615_SELFCHECK_TIME_MS 2500
 
 void pwm_init(void);
 void pwm_set_pulse(uint32_t channel, uint16_t pulse);

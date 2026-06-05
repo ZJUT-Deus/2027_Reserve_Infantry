@@ -13,6 +13,7 @@
 #include "I6X.h"
 #include "Can_receive.h"
 #include "Chassis.h"
+#include "Shoot.h"
 
 /** @brief 底盘通信管理类 (CAN 收发 + 遥控器数据处理) */
 class Communicate

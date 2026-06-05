@@ -15,8 +15,10 @@ void pwm_init(void)
     HAL_TIM_PWM_Start(&htim1, PWM_C615_FRICTION_L);
     HAL_TIM_PWM_Start(&htim1, PWM_C615_FRICTION_R);
 
-    pwm_set_pulse(PWM_C615_FRICTION_L, C615_PULSE_MID);
-    pwm_set_pulse(PWM_C615_FRICTION_R, C615_PULSE_MID);
+    pwm_set_pulse(PWM_C615_FRICTION_L, C615_PULSE_MIN);
+    pwm_set_pulse(PWM_C615_FRICTION_R, C615_PULSE_MIN);
+
+    HAL_Delay(C615_SELFCHECK_TIME_MS);
 }
 
 /**
