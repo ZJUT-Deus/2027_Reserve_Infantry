@@ -726,6 +726,11 @@
               <FilePath>..\User\Moudle\Src\Gimbal.cpp</FilePath>
             </File>
             <File>
+              <FileName>Shoot.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Moudle\Src\Shoot.cpp</FilePath>
+            </File>
+            <File>
               <FileName>Can_receive.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Protocol\Src\Can_receive.cpp</FilePath>
@@ -751,6 +756,11 @@
               <FilePath>..\User\Application\Src\gimbal_task.cpp</FilePath>
             </File>
             <File>
+              <FileName>shoot_task.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Application\Src\shoot_task.cpp</FilePath>
+            </File>
+            <File>
               <FileName>bsp_fdcan.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Bsp\Src\bsp_fdcan.cpp</FilePath>
@@ -759,16 +769,6 @@
               <FileName>bsp_pwm.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Bsp\Src\bsp_pwm.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>Shoot.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\User\Moudle\Src\Shoot.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>shoot_task.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\User\Application\Src\shoot_task.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -791,5 +791,4 @@
     </components>
     <files/>
   </RTE>
-
 </Project>

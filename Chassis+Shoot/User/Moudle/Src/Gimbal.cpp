@@ -115,7 +115,11 @@ void Gimbal::feedback_update()
     align_motor_offset(&pitch_motor, &pitch_offset_ready);
 
     yaw_motor.update_measure();
+    yaw_motor.speed *= GIMBAL_YAW_DIRECTION;
+    yaw_motor.encode_angle *= GIMBAL_YAW_DIRECTION;
     pitch_motor.update_measure();
+    pitch_motor.speed *= GIMBAL_PITCH_DIRECTION;
+    pitch_motor.encode_angle *= GIMBAL_PITCH_DIRECTION;
 }
 
 /**
@@ -176,7 +180,7 @@ void Gimbal::output()
 
     if (gimbal_behaviour_mode == GIMBAL_FREE && yaw_offset_ready && motor_online(&yaw_motor))
     {
-        fp32 yaw_current_fp = fp32_constrain(yaw_motor.current_give,
+        fp32 yaw_current_fp = fp32_constrain(yaw_motor.current_give * GIMBAL_YAW_DIRECTION,
                                              -GIMBAL_GM6020_MAX_CURRENT,
                                              GIMBAL_GM6020_MAX_CURRENT);
         yaw_current = (int16_t)yaw_current_fp;
@@ -184,7 +188,7 @@ void Gimbal::output()
 
     if (gimbal_behaviour_mode == GIMBAL_FREE && pitch_offset_ready && motor_online(&pitch_motor))
     {
-        fp32 pitch_current_fp = fp32_constrain(pitch_motor.current_give,
+        fp32 pitch_current_fp = fp32_constrain(pitch_motor.current_give * GIMBAL_PITCH_DIRECTION,
                                                -GIMBAL_GM6020_MAX_CURRENT,
                                                GIMBAL_GM6020_MAX_CURRENT);
         pitch_current = (int16_t)pitch_current_fp;

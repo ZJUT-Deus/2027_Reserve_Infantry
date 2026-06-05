@@ -128,6 +128,35 @@ static void i6x_clear_command(I6X_Chassis_cmd_t *chassis_cmd, I6X_Gimbal_cmd_t *
     i6x_clear_gimbal_command(gimbal_cmd);
 }
 
+static bool i6x_rc_changed(const I6X_RC_ctrl_t *current, const I6X_RC_ctrl_t *last)
+{
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        int16_t diff = current->rc.ch[i] - last->rc.ch[i];
+        if (diff < 0)
+        {
+            diff = -diff;
+        }
+
+        if (diff >= I6X_LED_CH_CHANGE_THRESHOLD)
+        {
+            return true;
+        }
+    }
+
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        if (current->rc.s[i] != last->rc.s[i])
+        {
+            return true;
+        }
+    }
+
+    return current->rc.frame_lost != last->rc.frame_lost ||
+           current->rc.failsafe != last->rc.failsafe ||
+           current->online != last->online;
+}
+
 static void i6x_start_dma_receive(UART_HandleTypeDef *huart, uint8_t *rx_buffer, uint16_t rx_buffer_size)
 {
     if (huart == NULL || rx_buffer == NULL || rx_buffer_size == 0U)
@@ -194,6 +223,11 @@ void I6X::unpack(uint32_t now_ms)
     i6x_rc_ctrl.rc.failsafe = (Rx_Buffer[23] >> 3) & 0x01;
     i6x_rc_ctrl.last_update_ms = now_ms;
     i6x_rc_ctrl.online = (i6x_rc_ctrl.rc.failsafe == 0) ? 1 : 0;
+
+    if (i6x_rc_changed(&i6x_rc_ctrl, &last_i6x_rc_ctrl))
+    {
+        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);
+    }
 
     update_command();
 }

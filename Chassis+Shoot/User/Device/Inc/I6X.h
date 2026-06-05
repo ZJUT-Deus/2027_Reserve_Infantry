@@ -61,6 +61,7 @@
 #define I6X_CHASSIS_MODE_SW     I6X_SW_C
 
 #define I6X_RC_DEADBAND         20
+#define I6X_LED_CH_CHANGE_THRESHOLD 20
 #define I6X_REMOTE_TIMEOUT_MS   100U
 
 #define I6X_CHASSIS_MAX_VX      3.0f

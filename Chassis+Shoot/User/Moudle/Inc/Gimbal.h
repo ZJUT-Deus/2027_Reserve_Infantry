@@ -28,26 +28,29 @@ extern "C" {
 #define GIMBAL_MOTOR_OFFLINE_MS 100U
 /** @brief GM6020 电流指令保守限幅 */
 #define GIMBAL_GM6020_MAX_CURRENT 8000.0f
+/** @brief yaw 轴安装方向: -1 表示编码器/电流正方向与期望 yaw 正方向相反 */
+#define GIMBAL_YAW_DIRECTION 1.0f
+/** @brief pitch 轴安装方向: -1 表示编码器/电流正方向与物理上仰方向相反 */
+#define GIMBAL_PITCH_DIRECTION -1.0f
 /** @brief pitch 机械上限 (rad), 暂按 2026 云台工程限位 */
-#define GIMBAL_PITCH_MAX_ANGLE 0.22f
+#define GIMBAL_PITCH_MAX_ANGLE 0.7853981633974483f
 /** @brief pitch 机械下限 (rad), 暂按 2026 云台工程限位 */
-#define GIMBAL_PITCH_MIN_ANGLE -0.27f
-
+#define GIMBAL_PITCH_MIN_ANGLE -0.2f
 /** @brief yaw 速度环 PID Kp */
-#define GIMBAL_YAW_SPEED_PID_KP       800.0f
+#define GIMBAL_YAW_SPEED_PID_KP       573.0f
 /** @brief yaw 速度环 PID Ki */
-#define GIMBAL_YAW_SPEED_PID_KI       0.0f
+#define GIMBAL_YAW_SPEED_PID_KI       8.6f
 /** @brief yaw 速度环 PID Kd */
 #define GIMBAL_YAW_SPEED_PID_KD       0.0f
 /** @brief yaw 速度环 PID Kf */
 #define GIMBAL_YAW_SPEED_PID_KF       0.0f
 /** @brief yaw 速度环积分限幅 */
-#define GIMBAL_YAW_SPEED_PID_MAX_IOUT 1500.0f
+#define GIMBAL_YAW_SPEED_PID_MAX_IOUT 4880.0f
 /** @brief yaw 速度环输出限幅 */
 #define GIMBAL_YAW_SPEED_PID_MAX_OUT  GIMBAL_GM6020_MAX_CURRENT
 
 /** @brief yaw 编码器角度环 PID Kp */
-#define GIMBAL_YAW_ANGLE_PID_KP       8.0f
+#define GIMBAL_YAW_ANGLE_PID_KP       90.0f
 /** @brief yaw 编码器角度环 PID Ki */
 #define GIMBAL_YAW_ANGLE_PID_KI       0.0f
 /** @brief yaw 编码器角度环 PID Kd */
@@ -57,33 +60,33 @@ extern "C" {
 /** @brief yaw 编码器角度环积分限幅 */
 #define GIMBAL_YAW_ANGLE_PID_MAX_IOUT 0.0f
 /** @brief yaw 编码器角度环输出限幅 */
-#define GIMBAL_YAW_ANGLE_PID_MAX_OUT  8.0f
+#define GIMBAL_YAW_ANGLE_PID_MAX_OUT  75.4f
 
 /** @brief pitch 速度环 PID Kp */
-#define GIMBAL_PITCH_SPEED_PID_KP       8000.0f
+#define GIMBAL_PITCH_SPEED_PID_KP       573.0f
 /** @brief pitch 速度环 PID Ki */
-#define GIMBAL_PITCH_SPEED_PID_KI       0.0f
+#define GIMBAL_PITCH_SPEED_PID_KI       8.6f
 /** @brief pitch 速度环 PID Kd */
 #define GIMBAL_PITCH_SPEED_PID_KD       0.0f
 /** @brief pitch 速度环 PID Kf */
 #define GIMBAL_PITCH_SPEED_PID_KF       0.0f
 /** @brief pitch 速度环积分限幅 */
-#define GIMBAL_PITCH_SPEED_PID_MAX_IOUT 10.0f
+#define GIMBAL_PITCH_SPEED_PID_MAX_IOUT 4880.0f
 /** @brief pitch 速度环输出限幅 */
 #define GIMBAL_PITCH_SPEED_PID_MAX_OUT  GIMBAL_GM6020_MAX_CURRENT
 
 /** @brief pitch 编码器角度环 PID Kp */
-#define GIMBAL_PITCH_ANGLE_PID_KP       30.0f
+#define GIMBAL_PITCH_ANGLE_PID_KP       90.0f
 /** @brief pitch 编码器角度环 PID Ki */
-#define GIMBAL_PITCH_ANGLE_PID_KI       0.01f
+#define GIMBAL_PITCH_ANGLE_PID_KI       0.0f
 /** @brief pitch 编码器角度环 PID Kd */
-#define GIMBAL_PITCH_ANGLE_PID_KD       3.0f
+#define GIMBAL_PITCH_ANGLE_PID_KD       0.0f
 /** @brief pitch 编码器角度环 PID Kf */
 #define GIMBAL_PITCH_ANGLE_PID_KF       0.0f
 /** @brief pitch 编码器角度环积分限幅 */
-#define GIMBAL_PITCH_ANGLE_PID_MAX_IOUT 1.0f
+#define GIMBAL_PITCH_ANGLE_PID_MAX_IOUT 0.0f
 /** @brief pitch 编码器角度环输出限幅 */
-#define GIMBAL_PITCH_ANGLE_PID_MAX_OUT  100.0f
+#define GIMBAL_PITCH_ANGLE_PID_MAX_OUT  75.4f
 
 /** @brief 云台行为状态机 */
 typedef enum
