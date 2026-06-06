@@ -101,7 +101,6 @@ typedef struct
 {
         fp32 vx;
         fp32 vy;
-        fp32 wz;
         uint8_t enable;
         uint8_t mode;
 } I6X_Chassis_cmd_t;
@@ -133,6 +132,7 @@ public:
     void unpack(uint32_t now_ms);
     void update_online(uint32_t now_ms);
     void update_command();
+    bool chassis_switch_is_safe();
 };
 
 extern I6X i6x;

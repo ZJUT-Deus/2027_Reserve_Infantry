@@ -85,7 +85,7 @@ void Chassis::startup_check()
         return;
     }
 
-    if (i6x.chassis_cmd.enable == 1)
+    if (!i6x.chassis_switch_is_safe())
     {
         return;
     }

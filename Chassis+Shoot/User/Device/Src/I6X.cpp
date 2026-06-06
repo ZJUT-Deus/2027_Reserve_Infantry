@@ -258,12 +258,17 @@ void I6X::update_command()
 
     if (i6x_switch_is_up(i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
     {
-        chassis_cmd.mode = I6X_CHASSIS_TOP;
-        gimbal_cmd.mode = I6X_GIMBAL_FREE;
+        i6x_clear_command(&chassis_cmd, &gimbal_cmd);
+        return;
     }
     else if (i6x_switch_is_mid(i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
     {
         chassis_cmd.mode = I6X_CHASSIS_FREE;
+        gimbal_cmd.mode = I6X_GIMBAL_FREE;
+    }
+    else if (i6x_switch_is_down(i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
+    {
+        chassis_cmd.mode = I6X_CHASSIS_TOP;
         gimbal_cmd.mode = I6X_GIMBAL_FREE;
     }
     else
@@ -282,10 +287,14 @@ void I6X::update_command()
 
     chassis_cmd.vx = i6x_norm_ch(vx_channel) * I6X_CHASSIS_MAX_VX;
     chassis_cmd.vy = i6x_norm_ch(vy_channel) * I6X_CHASSIS_MAX_VY;
-    chassis_cmd.wz = 0.0f;
 
     gimbal_cmd.yaw_speed = i6x_norm_ch(yaw_channel) * I6X_GIMBAL_MAX_YAW_SPEED;
     gimbal_cmd.pitch_speed = i6x_norm_ch(pitch_channel) * I6X_GIMBAL_MAX_PITCH_SPEED;
+}
+
+bool I6X::chassis_switch_is_safe()
+{
+    return i6x_switch_is_up(i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]);
 }
 
 extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)

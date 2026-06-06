@@ -61,11 +61,11 @@ void Communicate::handle_rc()
     }
 
     /* ---- 底盘控制 (SW_C: 上=无力, 中=自由, 下=自旋) ---- */
-    if (i6x_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
+    if (i6x.chassis_cmd.mode == I6X_CHASSIS_ZERO_FORCE)
     {
         chassis_stop();
     }
-    else if (i6x_switch_is_mid(i6x.i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
+    else if (i6x.chassis_cmd.mode == I6X_CHASSIS_FREE)
     {
         fp32 vx = map_speed(i6x.chassis_cmd.vx,
                             I6X_CHASSIS_MAX_VX, NORMAL_MAX_CHASSIS_SPEED_X);
@@ -74,36 +74,23 @@ void Communicate::handle_rc()
 
         chassis_set_velocity(vx, vy, 0.0f);
     }
-    else
+    else if (i6x.chassis_cmd.mode == I6X_CHASSIS_TOP)
     {
-        int16_t raw_vx = i6x.i6x_rc_ctrl.rc.ch[I6X_CHASSIS_VX_CH];
-        int16_t raw_vy = i6x.i6x_rc_ctrl.rc.ch[I6X_CHASSIS_VY_CH];
-
-        if (raw_vx > -I6X_RC_DEADBAND && raw_vx < I6X_RC_DEADBAND)
-            raw_vx = 0;
-        if (raw_vy > -I6X_RC_DEADBAND && raw_vy < I6X_RC_DEADBAND)
-            raw_vy = 0;
-
-        if (raw_vx > I6X_CH_VALUE_MAX)
-            raw_vx = I6X_CH_VALUE_MAX;
-        else if (raw_vx < I6X_CH_VALUE_MIN)
-            raw_vx = I6X_CH_VALUE_MIN;
-        if (raw_vy > I6X_CH_VALUE_MAX)
-            raw_vy = I6X_CH_VALUE_MAX;
-        else if (raw_vy < I6X_CH_VALUE_MIN)
-            raw_vy = I6X_CH_VALUE_MIN;
-
-        fp32 cmd_vx = ((fp32)raw_vx / (fp32)I6X_CH_VALUE_MAX) * I6X_CHASSIS_MAX_VX;
-        fp32 cmd_vy = ((fp32)raw_vy / (fp32)I6X_CH_VALUE_MAX) * I6X_CHASSIS_MAX_VY;
-        fp32 vx = map_speed(cmd_vx, I6X_CHASSIS_MAX_VX, NORMAL_MAX_CHASSIS_SPEED_X);
-        fp32 vy = map_speed(cmd_vy, I6X_CHASSIS_MAX_VY, NORMAL_MAX_CHASSIS_SPEED_Y);
+        fp32 vx = map_speed(i6x.chassis_cmd.vx,
+                            I6X_CHASSIS_MAX_VX, NORMAL_MAX_CHASSIS_SPEED_X);
+        fp32 vy = map_speed(i6x.chassis_cmd.vy,
+                            I6X_CHASSIS_MAX_VY, NORMAL_MAX_CHASSIS_SPEED_Y);
 
         chassis_set_spin(vx, vy, SPIN_WZ_SPEED);
+    }
+    else
+    {
+        chassis_stop();
     }
 
     /* ---- 射击控制 (SW_A=摩擦轮, SW_B=连发射击, 拨杆在上时无力) ---- */
     if (i6x.i6x_rc_ctrl.online == 0
-        || i6x_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
+        || i6x.chassis_cmd.mode == I6X_CHASSIS_ZERO_FORCE)
     {
         shoot_stop();
     }
