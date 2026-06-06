@@ -21,7 +21,7 @@ extern "C" {
 /** @brief 云台控制周期 (s) */
 #define GIMBAL_CONTROL_TIME 0.002f
 /** @brief 云台 yaw 遥控最大角速度 (rad/s) */
-#define GIMBAL_YAW_RC_SPEED_MAX 2.5f
+#define GIMBAL_YAW_RC_SPEED_MAX 3.5f
 /** @brief 云台 pitch 遥控最大角速度 (rad/s) */
 #define GIMBAL_PITCH_RC_SPEED_MAX 1.5f
 /** @brief 云台电机离线超时 (ms) */

@@ -66,7 +66,7 @@
 
 #define I6X_CHASSIS_MAX_VX      3.0f
 #define I6X_CHASSIS_MAX_VY      3.0f
-#define I6X_GIMBAL_MAX_YAW_SPEED   2.5f
+#define I6X_GIMBAL_MAX_YAW_SPEED   3.5f
 #define I6X_GIMBAL_MAX_PITCH_SPEED 1.5f
 
 typedef enum
