@@ -60,11 +60,12 @@ void Communicate::handle_rc()
         gimbal_set_pitch_speed(i6x.gimbal_cmd.pitch_speed);
     }
 
-    if (i6x.chassis_cmd.enable == 0)
+    /* ---- 底盘控制 (SW_C: 上=无力, 中=自由, 下=自旋) ---- */
+    if (i6x_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
     {
         chassis_stop();
     }
-    else if (i6x.chassis_cmd.mode == I6X_CHASSIS_FREE)
+    else if (i6x_switch_is_mid(i6x.i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
     {
         fp32 vx = map_speed(i6x.chassis_cmd.vx,
                             I6X_CHASSIS_MAX_VX, NORMAL_MAX_CHASSIS_SPEED_X);
@@ -73,31 +74,45 @@ void Communicate::handle_rc()
 
         chassis_set_velocity(vx, vy, 0.0f);
     }
-    else if (i6x.chassis_cmd.mode == I6X_CHASSIS_TOP)
+    else
     {
-        fp32 vx = map_speed(i6x.chassis_cmd.vx,
-                            I6X_CHASSIS_MAX_VX, NORMAL_MAX_CHASSIS_SPEED_X);
-        fp32 vy = map_speed(i6x.chassis_cmd.vy,
-                            I6X_CHASSIS_MAX_VY, NORMAL_MAX_CHASSIS_SPEED_Y);
+        int16_t raw_vx = i6x.i6x_rc_ctrl.rc.ch[I6X_CHASSIS_VX_CH];
+        int16_t raw_vy = i6x.i6x_rc_ctrl.rc.ch[I6X_CHASSIS_VY_CH];
+
+        if (raw_vx > -I6X_RC_DEADBAND && raw_vx < I6X_RC_DEADBAND)
+            raw_vx = 0;
+        if (raw_vy > -I6X_RC_DEADBAND && raw_vy < I6X_RC_DEADBAND)
+            raw_vy = 0;
+
+        if (raw_vx > I6X_CH_VALUE_MAX)
+            raw_vx = I6X_CH_VALUE_MAX;
+        else if (raw_vx < I6X_CH_VALUE_MIN)
+            raw_vx = I6X_CH_VALUE_MIN;
+        if (raw_vy > I6X_CH_VALUE_MAX)
+            raw_vy = I6X_CH_VALUE_MAX;
+        else if (raw_vy < I6X_CH_VALUE_MIN)
+            raw_vy = I6X_CH_VALUE_MIN;
+
+        fp32 cmd_vx = ((fp32)raw_vx / (fp32)I6X_CH_VALUE_MAX) * I6X_CHASSIS_MAX_VX;
+        fp32 cmd_vy = ((fp32)raw_vy / (fp32)I6X_CH_VALUE_MAX) * I6X_CHASSIS_MAX_VY;
+        fp32 vx = map_speed(cmd_vx, I6X_CHASSIS_MAX_VX, NORMAL_MAX_CHASSIS_SPEED_X);
+        fp32 vy = map_speed(cmd_vy, I6X_CHASSIS_MAX_VY, NORMAL_MAX_CHASSIS_SPEED_Y);
 
         chassis_set_spin(vx, vy, SPIN_WZ_SPEED);
     }
-    else
-    {
-        chassis_stop();
-    }
 
-    /* ---- 射击控制 (SW_A=摩擦轮, SW_B=连发射击, 底盘无力时强制停止) ---- */
-    if (i6x.i6x_rc_ctrl.online == 0 || i6x.chassis_cmd.enable == 0)
+    /* ---- 射击控制 (SW_A=摩擦轮, SW_B=连发射击, 拨杆在上时无力) ---- */
+    if (i6x.i6x_rc_ctrl.online == 0
+        || i6x_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
     {
         shoot_stop();
     }
-    else if (i6x_2pos_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_SW_A])
-          && i6x_2pos_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_SW_B]))
+    else if (i6x_2pos_switch_is_down(i6x.i6x_rc_ctrl.rc.s[I6X_SW_A])
+          && i6x_2pos_switch_is_down(i6x.i6x_rc_ctrl.rc.s[I6X_SW_B]))
     {
         shoot_continue_bullet();
     }
-    else if (i6x_2pos_switch_is_up(i6x.i6x_rc_ctrl.rc.s[I6X_SW_A]))
+    else if (i6x_2pos_switch_is_down(i6x.i6x_rc_ctrl.rc.s[I6X_SW_A]))
     {
         shoot_ready();
     }

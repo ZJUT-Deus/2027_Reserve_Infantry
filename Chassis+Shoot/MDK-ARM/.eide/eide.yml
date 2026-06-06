@@ -94,6 +94,7 @@ virtualFolder:
             - path: ../User/Application/Src/chassis_task.cpp
             - path: ../User/Application/Src/communicate_task.cpp
             - path: ../User/Application/Src/shoot_task.cpp
+            - path: ../User/Application/Src/gimbal_task.cpp
           folders: []
         - name: Bsp
           files:
@@ -114,6 +115,7 @@ virtualFolder:
             - path: ../User/Moudle/Src/Chassis.cpp
             - path: ../User/Moudle/Src/Communicate.cpp
             - path: ../User/Moudle/Src/Shoot.cpp
+            - path: ../User/Moudle/Src/Gimbal.cpp
           folders: []
         - name: Protocol
           files:
