@@ -53,8 +53,8 @@
 #define I6X_SW_C                2
 #define I6X_SW_D                3
 
-#define I6X_GIMBAL_PITCH_CH     0
-#define I6X_GIMBAL_YAW_CH       1
+#define I6X_GIMBAL_YAW_CH       0
+#define I6X_GIMBAL_PITCH_CH     1
 #define I6X_CHASSIS_VY_CH       2
 #define I6X_CHASSIS_VX_CH       3
 

@@ -52,6 +52,7 @@ void Gimbal::init()
     imu_roll_angle = 0.0f;
     yaw_offset_ready = false;
     pitch_offset_ready = false;
+    startup_center_done = false;
     imu_ready = bmi088.init(&hspi2);
 
     yaw_motor = DJI_GM6020(GIMBAL_YAW_CAN_ID, can_receive.get_gimbal_motor_measure_point(0));
@@ -77,11 +78,12 @@ void Gimbal::init()
 }
 
 /**
- * @brief  根据首次有效反馈对齐电机上电零点
+ * @brief  首次有效反馈后装载电机机械中值零点
  * @param  motor        GM6020 电机对象
  * @param  offset_ready 零点状态标志
+ * @param  center_ecd   机械中值编码器值
  */
-void Gimbal::align_motor_offset(DJI_GM6020 *motor, bool *offset_ready)
+void Gimbal::align_motor_offset(DJI_GM6020 *motor, bool *offset_ready, uint16_t center_ecd)
 {
     if (motor == NULL || offset_ready == NULL || *offset_ready)
     {
@@ -93,7 +95,7 @@ void Gimbal::align_motor_offset(DJI_GM6020 *motor, bool *offset_ready)
         return;
     }
 
-    motor->offset_ecd = motor->measure->ecd;
+    motor->offset_ecd = center_ecd;
     motor->encode_angle = 0.0f;
     motor->encode_angle_set = 0.0f;
     *offset_ready = true;
@@ -120,6 +122,22 @@ bool Gimbal::motor_online(const DJI_GM6020 *motor) const
 bool Gimbal::gimbal_active() const
 {
     return gimbal_behaviour_mode == GIMBAL_FREE || gimbal_behaviour_mode == GIMBAL_TOP;
+}
+
+/**
+ * @brief  yaw 机械零点下的归中目标角
+ */
+fp32 Gimbal::get_yaw_center_angle() const
+{
+    return 0.0f;
+}
+
+/**
+ * @brief  pitch 机械零点下的归中目标角
+ */
+fp32 Gimbal::get_pitch_center_angle() const
+{
+    return constrain_pitch_angle(0.0f);
 }
 
 /**
@@ -178,8 +196,16 @@ void Gimbal::handle_mode_change()
     }
     else if (gimbal_behaviour_mode == GIMBAL_FREE)
     {
-        yaw_motor.encode_angle_set = yaw_motor.encode_angle;
-        pitch_motor.encode_angle_set = constrain_pitch_angle(pitch_motor.encode_angle);
+        if (startup_center_done)
+        {
+            yaw_motor.encode_angle_set = get_yaw_center_angle();
+            pitch_motor.encode_angle_set = get_pitch_center_angle();
+        }
+        else
+        {
+            yaw_motor.encode_angle_set = yaw_motor.encode_angle;
+            pitch_motor.encode_angle_set = constrain_pitch_angle(pitch_motor.encode_angle);
+        }
         yaw_motor.speed_set = 0.0f;
         pitch_motor.speed_set = 0.0f;
         yaw_motor.speed_pid.Clear();
@@ -192,6 +218,28 @@ void Gimbal::handle_mode_change()
     {
         stop();
     }
+}
+
+/**
+ * @brief  上电后首次拿到双轴有效反馈时装载 FREE 模式归中目标
+ */
+void Gimbal::apply_startup_center()
+{
+    if (startup_center_done || !yaw_offset_ready || !pitch_offset_ready ||
+        !motor_online(&yaw_motor) || !motor_online(&pitch_motor))
+    {
+        return;
+    }
+
+    yaw_motor.set(get_yaw_center_angle(), ENCODE_ANGLE);
+    pitch_motor.set(get_pitch_center_angle(), ENCODE_ANGLE);
+    yaw_motor.speed_set = 0.0f;
+    pitch_motor.speed_set = 0.0f;
+    yaw_motor.speed_pid.Clear();
+    yaw_motor.encode_angle_pid.align_state_to_current();
+    pitch_motor.speed_pid.Clear();
+    pitch_motor.encode_angle_pid.align_state_to_current();
+    startup_center_done = true;
 }
 
 /**
@@ -209,8 +257,8 @@ fp32 Gimbal::constrain_pitch_angle(fp32 pitch_angle) const
  */
 void Gimbal::feedback_update()
 {
-    align_motor_offset(&yaw_motor, &yaw_offset_ready);
-    align_motor_offset(&pitch_motor, &pitch_offset_ready);
+    align_motor_offset(&yaw_motor, &yaw_offset_ready, GIMBAL_YAW_CENTER_ECD);
+    align_motor_offset(&pitch_motor, &pitch_offset_ready, GIMBAL_PITCH_CENTER_ECD);
 
     update_imu_feedback();
 
@@ -220,6 +268,8 @@ void Gimbal::feedback_update()
     pitch_motor.update_measure();
     pitch_motor.speed *= GIMBAL_PITCH_DIRECTION;
     pitch_motor.encode_angle *= GIMBAL_PITCH_DIRECTION;
+
+    apply_startup_center();
 }
 
 /**

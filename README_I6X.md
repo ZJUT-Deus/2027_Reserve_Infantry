@@ -4,7 +4,7 @@ author:klsdn
 data:2026.5.25
 version:1.0
 
-本项目使用 FS-i6X 遥控器搭配 iA6B 接收机，接收机输出 SBUS，STM32H723 通过 UART5 + DMA 接收。代码保留独立的 `I6X` 类，负责 SBUS 帧接收、通道解包、拨杆状态转换、在线判断和底盘命令映射。
+本项目使用 FS-i6X 遥控器搭配 iA6B 接收机，接收机输出 SBUS，STM32H723 通过 UART5 + DMA 接收。代码保留独立的 `I6X` 类，负责 SBUS 帧接收、通道解包、拨杆状态转换、在线判断，以及底盘/云台命令映射。
 
 ## 当前硬件与串口配置
 
@@ -64,14 +64,14 @@ SWA / SWB / SWD: 上 = 1, 下 = 0
 
 当前工程的通道分配：
 
-| SBUS 通道 | 项目含义 |
-| --- | --- |
-| `ch[0]` | 预留给云台 `pitch` |
-| `ch[1]` | 预留给云台 `yaw` |
-| `ch[2]` | 底盘 `y / vy` |
-| `ch[3]` | 底盘 `x / vx` |
-| `ch[4]` | 预留 |
-| `ch[5]` | 预留 |
+| SBUS 通道 | 项目含义 | 对应宏 |
+| --- | --- | --- |
+| `ch[0]` | 云台 `yaw` | `I6X_GIMBAL_YAW_CH` |
+| `ch[1]` | 云台 `pitch` | `I6X_GIMBAL_PITCH_CH` |
+| `ch[2]` | 底盘 `y / vy` | `I6X_CHASSIS_VY_CH` |
+| `ch[3]` | 底盘 `x / vx` | `I6X_CHASSIS_VX_CH` |
+| `ch[4]` | 预留 | - |
+| `ch[5]` | 预留 | - |
 
 当前工程的拨杆分配：
 
@@ -84,15 +84,15 @@ SWA / SWB / SWD: 上 = 1, 下 = 0
 
 `SWC` 三段模式：
 
-| SWC 位置 | `chassis_cmd.mode` | 含义 |
-| --- | --- | --- |
-| 上 | `I6X_CHASSIS_TOP` | 小陀螺模式 |
-| 中 | `I6X_CHASSIS_FREE` | 自由运动模式 |
-| 下 | `I6X_CHASSIS_ZERO_FORCE` | 无力模式 |
+| SWC 位置 | `chassis_cmd.mode` | `gimbal_cmd.mode` | 含义 |
+| --- | --- | --- | --- |
+| 上 | `I6X_CHASSIS_ZERO_FORCE` | `I6X_GIMBAL_ZERO_FORCE` | 安全/无力模式，命令清零 |
+| 中 | `I6X_CHASSIS_FREE` | `I6X_GIMBAL_FREE` | 自由运动/云台编码器模式 |
+| 下 | `I6X_CHASSIS_TOP` | `I6X_GIMBAL_TOP` | 小陀螺/云台自稳模式 |
 
 ## 命令映射层
 
-业务代码不建议直接到处使用 `rc.ch[]` 或 `rc.s[]` 下标。优先读取 `i6x.chassis_cmd`：
+业务代码不建议直接到处使用 `rc.ch[]` 或 `rc.s[]` 下标。优先读取 `i6x.chassis_cmd` 和 `i6x.gimbal_cmd`：
 
 ```cpp
 i6x.update_online(HAL_GetTick());
@@ -107,7 +107,27 @@ else
     vx_set = 0.0f;
     vy_set = 0.0f;
 }
+
+if (i6x.gimbal_cmd.enable)
+{
+    yaw_speed_set = i6x.gimbal_cmd.yaw_speed;
+    pitch_speed_set = i6x.gimbal_cmd.pitch_speed;
+}
+else
+{
+    yaw_speed_set = 0.0f;
+    pitch_speed_set = 0.0f;
+}
 ```
+
+云台 yaw/pitch 速度直接由归一化通道值乘以最大速度得到，当前不再额外叠加摇杆方向宏：
+
+```cpp
+gimbal_cmd.yaw_speed = i6x_norm_ch(yaw_channel) * I6X_GIMBAL_MAX_YAW_SPEED;
+gimbal_cmd.pitch_speed = i6x_norm_ch(pitch_channel) * I6X_GIMBAL_MAX_PITCH_SPEED;
+```
+
+当接收机离线、failsafe 触发，或 `SWC` 位于上档安全位时，底盘和云台命令都会清零。
 
 ## DMA Buffer 放置规则(我遇到的纯vscode内生成问题 好像为编译器指向问题 如为其他编译器可不考虑 遇到dma数据无法访问的时候可参考此方式)
 

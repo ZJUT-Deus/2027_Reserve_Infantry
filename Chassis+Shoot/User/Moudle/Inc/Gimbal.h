@@ -24,7 +24,7 @@ extern "C" {
 /** @brief 云台 yaw 遥控最大角速度 (rad/s) */
 #define GIMBAL_YAW_RC_SPEED_MAX 3.5f
 /** @brief top 模式 yaw 陀螺仪角度环输出限幅 (rad/s) */
-#define GIMBAL_YAW_TOP_SPEED_MAX 8.0f
+#define GIMBAL_YAW_TOP_SPEED_MAX 4.0f
 /** @brief 云台 pitch 遥控最大角速度 (rad/s) */
 #define GIMBAL_PITCH_RC_SPEED_MAX 1.5f
 /** @brief 云台电机离线超时 (ms) */
@@ -35,6 +35,10 @@ extern "C" {
 #define GIMBAL_YAW_DIRECTION 1.0f
 /** @brief pitch 轴安装方向: -1 表示编码器/电流正方向与物理上仰方向相反 */
 #define GIMBAL_PITCH_DIRECTION -1.0f
+/** @brief yaw 机械中值编码器值, 作为编码器角度零点 */
+#define GIMBAL_YAW_CENTER_ECD 0x1407U
+/** @brief pitch 机械中值编码器值, 作为编码器角度零点 */
+#define GIMBAL_PITCH_CENTER_ECD 0x0845U
 /** @brief pitch 机械上限 (rad), 暂按 2026 云台工程限位 */
 #define GIMBAL_PITCH_MAX_ANGLE 0.7853981633974483f
 /** @brief pitch 机械下限 (rad), 暂按 2026 云台工程限位 */
@@ -103,7 +107,7 @@ extern "C" {
 #define GIMBAL_YAW_GYRO_ANGLE_PID_MAX_IOUT 5.0f
 /** @brief top 模式 yaw IMU 角度环输出限幅 */
 #define GIMBAL_YAW_GYRO_ANGLE_PID_MAX_OUT  120.0f
-/** @brief BMI088 yaw 符号方向, 若 top 模式反向可改为 -1 */
+/** @brief BMI088 yaw 符号方向, 若 top 模式反向可改为 1 */
 #define GIMBAL_IMU_YAW_DIRECTION -1.0f
 /** @brief BMI088 yaw 角速度一阶低通时间常数 (s), 越大越稳但响应越慢 */
 #define GIMBAL_IMU_YAW_RATE_FILTER_TAU 0.023f
@@ -146,8 +150,9 @@ public:
     First_order_filter imu_yaw_rate_filter; /**< BMI088 yaw 角速度一阶低通 */
     fp32 imu_pitch_angle;      /**< 云台 pitch 角度反馈, 由 BMI088 roll 映射 */
     fp32 imu_roll_angle;       /**< 云台 roll 方向反馈, 由 BMI088 pitch 映射 */
-    bool yaw_offset_ready;     /**< yaw 上电零点是否已对齐 */
-    bool pitch_offset_ready;   /**< pitch 上电零点是否已对齐 */
+    bool yaw_offset_ready;     /**< yaw 机械零点是否已装载 */
+    bool pitch_offset_ready;   /**< pitch 机械零点是否已装载 */
+    bool startup_center_done;  /**< 上电归中目标是否已装载 */
     bool imu_ready;            /**< BMI088 是否可用 */
 
     void init();
@@ -164,11 +169,14 @@ public:
     void stop();
 
 private:
-    void align_motor_offset(DJI_GM6020 *motor, bool *offset_ready);
+    void align_motor_offset(DJI_GM6020 *motor, bool *offset_ready, uint16_t center_ecd);
     bool motor_online(const DJI_GM6020 *motor) const;
     bool gimbal_active() const;
     void handle_mode_change();
+    void apply_startup_center();
     void update_imu_feedback();
+    fp32 get_yaw_center_angle() const;
+    fp32 get_pitch_center_angle() const;
     fp32 constrain_pitch_angle(fp32 pitch_angle) const;
 };
 

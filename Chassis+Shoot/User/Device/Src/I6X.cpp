@@ -288,8 +288,10 @@ void I6X::update_command()
     chassis_cmd.vx = i6x_norm_ch(vx_channel) * I6X_CHASSIS_MAX_VX;
     chassis_cmd.vy = i6x_norm_ch(vy_channel) * I6X_CHASSIS_MAX_VY;
 
-    gimbal_cmd.yaw_speed = i6x_norm_ch(yaw_channel) * I6X_GIMBAL_MAX_YAW_SPEED;
-    gimbal_cmd.pitch_speed = i6x_norm_ch(pitch_channel) * I6X_GIMBAL_MAX_PITCH_SPEED;
+    gimbal_cmd.yaw_speed = i6x_norm_ch(yaw_channel) *
+                            I6X_GIMBAL_MAX_YAW_SPEED;
+    gimbal_cmd.pitch_speed = i6x_norm_ch(pitch_channel) *
+                              I6X_GIMBAL_MAX_PITCH_SPEED;
 }
 
 bool I6X::chassis_switch_is_safe()
