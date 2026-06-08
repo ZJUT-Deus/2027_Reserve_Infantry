@@ -269,7 +269,7 @@ void I6X::update_command()
     else if (i6x_switch_is_down(i6x_rc_ctrl.rc.s[I6X_CHASSIS_MODE_SW]))
     {
         chassis_cmd.mode = I6X_CHASSIS_TOP;
-        gimbal_cmd.mode = I6X_GIMBAL_FREE;
+        gimbal_cmd.mode = I6X_GIMBAL_TOP;
     }
     else
     {

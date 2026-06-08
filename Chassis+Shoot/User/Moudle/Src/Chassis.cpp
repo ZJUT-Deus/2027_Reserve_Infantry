@@ -7,7 +7,9 @@
 
 #include "Chassis.h"
 #include "bsp_fdcan.h"
+#include "Gimbal.h"
 #include "I6X.h"
+#include <math.h>
 
 Chassis chassis;
 
@@ -35,6 +37,9 @@ void Chassis::init()
     user_vx_set = 0.0f;
     user_vy_set = 0.0f;
     user_wz_set = 0.0f;
+
+    chassis_relative_angle = 0.0f;
+    last_chassis_relative_angle = 0.0f;
 
     motor_enabled = false;
 
@@ -118,6 +123,12 @@ void Chassis::feedback_update()
     x.speed = ( w0 + w1 + w2 + w3) * MOTOR_WHEEL_RADIUS / 4.0f;
     y.speed = (-w0 + w1 + w2 - w3) * MOTOR_WHEEL_RADIUS / 4.0f;
     z.speed = (-w0 + w1 - w2 + w3) * MOTOR_WHEEL_RADIUS / (4.0f * MOTOR_DISTANCE_TO_CENTER);
+
+    last_chassis_relative_angle = chassis_relative_angle;
+    if (gimbal.yaw_offset_ready)
+    {
+        chassis_relative_angle = rad_format(gimbal.yaw_motor.encode_angle - CHASSIS_GIMBAL_YAW_OFFSET);
+    }
 }
 
 /**
@@ -207,9 +218,9 @@ void Chassis::chassis_behaviour_control_set(fp32 *vx_set, fp32 *vy_set, fp32 *wz
     {
         chassis_free_control(vx_set, vy_set, wz_set);
     }
-    else if (chassis_behaviour_mode == CHASSIS_SPIN)
+    else if (chassis_behaviour_mode == CHASSIS_TOP)
     {
-        chassis_spin_control(vx_set, vy_set, wz_set);
+        chassis_top_control(vx_set, vy_set, wz_set);
     }
 }
 
@@ -267,7 +278,7 @@ void Chassis::chassis_free_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set)
  * @param  vy_set Y 轴速度指令
  * @param  wz_set Z 轴角速度指令
  */
-void Chassis::chassis_spin_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set)
+void Chassis::chassis_top_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set)
 {
     if (vx_set == NULL || vy_set == NULL || wz_set == NULL)
     {
@@ -277,8 +288,13 @@ void Chassis::chassis_spin_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set)
     chassis_cmd_slow_set_vx.first_order_filter_cali(user_vx_set);
     chassis_cmd_slow_set_vy.first_order_filter_cali(user_vy_set);
 
-    *vx_set = chassis_cmd_slow_set_vx.out;
-    *vy_set = chassis_cmd_slow_set_vy.out;
+    fp32 sin_yaw = sinf(chassis_relative_angle);
+    fp32 cos_yaw = cosf(chassis_relative_angle);
+    fp32 vx_gimbal = chassis_cmd_slow_set_vx.out;
+    fp32 vy_gimbal = chassis_cmd_slow_set_vy.out;
+
+    *vx_set = cos_yaw * vx_gimbal + sin_yaw * vy_gimbal;
+    *vy_set = sin_yaw * vx_gimbal - cos_yaw * vy_gimbal;
     *wz_set = user_wz_set;
 }
 
@@ -331,12 +347,12 @@ void chassis_set_velocity(fp32 vx, fp32 vy, fp32 wz)
  * @param  vy 横移速度 (m/s)
  * @param  wz 旋转角速度 (rad/s)
  */
-void chassis_set_spin(fp32 vx, fp32 vy, fp32 wz)
+void chassis_set_top(fp32 vx, fp32 vy, fp32 wz)
 {
     chassis.user_vx_set = vx;
     chassis.user_vy_set = vy;
     chassis.user_wz_set = wz;
-    chassis.chassis_behaviour_mode = CHASSIS_SPIN;
+    chassis.chassis_behaviour_mode = CHASSIS_TOP;
 }
 
 /**

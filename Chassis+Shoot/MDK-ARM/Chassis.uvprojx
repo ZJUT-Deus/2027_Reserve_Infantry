@@ -706,6 +706,11 @@
               <FilePath>..\User\Device\Src\Motor.cpp</FilePath>
             </File>
             <File>
+              <FileName>BMI088.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Device\Src\BMI088.cpp</FilePath>
+            </File>
+            <File>
               <FileName>Chassis.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Moudle\Src\Chassis.cpp</FilePath>

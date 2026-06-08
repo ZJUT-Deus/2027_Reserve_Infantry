@@ -54,6 +54,10 @@ void Communicate::handle_rc()
     {
         gimbal_stop();
     }
+    else if (i6x.gimbal_cmd.mode == I6X_GIMBAL_TOP)
+    {
+        gimbal_set_top_speed(i6x.gimbal_cmd.yaw_speed, i6x.gimbal_cmd.pitch_speed);
+    }
     else
     {
         gimbal_set_yaw_speed(i6x.gimbal_cmd.yaw_speed);
@@ -81,7 +85,7 @@ void Communicate::handle_rc()
         fp32 vy = map_speed(i6x.chassis_cmd.vy,
                             I6X_CHASSIS_MAX_VY, NORMAL_MAX_CHASSIS_SPEED_Y);
 
-        chassis_set_spin(vx, vy, SPIN_WZ_SPEED);
+        chassis_set_top(vx, vy, TOP_WZ_SPEED);
     }
     else
     {

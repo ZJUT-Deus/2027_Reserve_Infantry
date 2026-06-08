@@ -79,6 +79,7 @@ typedef enum
 typedef enum
 {
         I6X_GIMBAL_ZERO_FORCE = 0,
+        I6X_GIMBAL_TOP,
         I6X_GIMBAL_FREE,
 } i6x_gimbal_mode_e;
 

@@ -36,8 +36,10 @@ extern "C" {
 #define NORMAL_MAX_CHASSIS_SPEED_Y  1.5f
 /** @brief Z 轴最大角速度 (rad/s) */
 #define NORMAL_MAX_CHASSIS_SPEED_Z  14.0f
-/** @brief 小陀螺固定旋转速度 (rad/s) */
-#define SPIN_WZ_SPEED              5.0f
+/** @brief top 模式固定旋转速度 (rad/s) */
+#define TOP_WZ_SPEED               5.0f
+/** @brief 云台 yaw 编码器零位到车体前方的安装偏置, 方向不准时在此处标定 */
+#define CHASSIS_GIMBAL_YAW_OFFSET  0.0f
 
 /** @brief X 轴加速度滤波系数 */
 #define CHASSIS_ACCEL_X_NUM  0.1666666667f
@@ -64,7 +66,7 @@ typedef enum
 {
     CHASSIS_ZERO_FORCE = 0, /**< 无力模式 */
     CHASSIS_FREE,           /**< 自由速度模式 */
-    CHASSIS_SPIN,           /**< 小陀螺模式 */
+    CHASSIS_TOP,            /**< 小陀螺/云台方向运动模式 */
 } chassis_behaviour_e;
 
 /** @brief 单轴速度数据结构 */
@@ -96,6 +98,9 @@ public:
     First_order_filter chassis_cmd_slow_set_vx; /**< X 轴一阶滤波 */
     First_order_filter chassis_cmd_slow_set_vy; /**< Y 轴一阶滤波 */
 
+    fp32 chassis_relative_angle;      /**< 云台相对底盘 yaw 角 */
+    fp32 last_chassis_relative_angle; /**< 上一次云台相对底盘 yaw 角 */
+
     fp32 user_vx_set;   /**< 用户指令 Vx */
     fp32 user_vy_set;   /**< 用户指令 Vy */
     fp32 user_wz_set;   /**< 用户指令 Wz */
@@ -111,7 +116,7 @@ public:
 
     void chassis_behaviour_control_set(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set);
     void chassis_free_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set);
-    void chassis_spin_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set);
+    void chassis_top_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set);
     void chassis_zero_force_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set);
     void chassis_vector_to_mecanum_wheel_speed(fp32 wheel_speed[4]);
 };
@@ -124,7 +129,7 @@ extern "C" {
 
 void chassis_init(void);
 void chassis_set_velocity(fp32 vx, fp32 vy, fp32 wz);
-void chassis_set_spin(fp32 vx, fp32 vy, fp32 wz);
+void chassis_set_top(fp32 vx, fp32 vy, fp32 wz);
 void chassis_stop(void);
 void chassis_control_loop(void);
 
