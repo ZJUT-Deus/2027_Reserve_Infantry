@@ -12,11 +12,9 @@
 #include <math.h>
 
 Chassis chassis;
-
 static float Chassis_SPEED_PID[6] = {
     CHASSIS_SPEED_PID_KP, CHASSIS_SPEED_PID_KI, CHASSIS_SPEED_PID_KD,
-    CHASSIS_SPEED_PID_KF, CHASSIS_SPEED_PID_MAX_IOUT, CHASSIS_SPEED_PID_MAX_OUT
-};
+    CHASSIS_SPEED_PID_KF, CHASSIS_SPEED_PID_MAX_IOUT, CHASSIS_SPEED_PID_MAX_OUT};
 
 static const uint16_t CHASSIS_CAN_ID[4] = {
     CHASSIS_FR_CAN_ID, CHASSIS_FL_CAN_ID, CHASSIS_BR_CAN_ID, CHASSIS_BL_CAN_ID
@@ -260,11 +258,13 @@ void Chassis::chassis_free_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set)
     if (user_vx_set < CHASSIS_ACCEL_X_NUM && user_vx_set > -CHASSIS_ACCEL_X_NUM)
     {
         chassis_cmd_slow_set_vx.out = 0.0f;
+        chassis_cmd_slow_set_vx.input = 0.0f;
     }
 
     if (user_vy_set < CHASSIS_ACCEL_Y_NUM && user_vy_set > -CHASSIS_ACCEL_Y_NUM)
     {
         chassis_cmd_slow_set_vy.out = 0.0f;
+        chassis_cmd_slow_set_vy.input = 0.0f;
     }
 
     *vx_set = chassis_cmd_slow_set_vx.out;
@@ -288,13 +288,25 @@ void Chassis::chassis_top_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set)
     chassis_cmd_slow_set_vx.first_order_filter_cali(user_vx_set);
     chassis_cmd_slow_set_vy.first_order_filter_cali(user_vy_set);
 
-    fp32 sin_yaw = sinf(chassis_relative_angle);
-    fp32 cos_yaw = cosf(chassis_relative_angle);
+    fp32 sin_yaw = sinf(-chassis_relative_angle);
+    fp32 cos_yaw = cosf(-chassis_relative_angle);
     fp32 vx_gimbal = chassis_cmd_slow_set_vx.out;
     fp32 vy_gimbal = chassis_cmd_slow_set_vy.out;
 
-    *vx_set = cos_yaw * vx_gimbal + sin_yaw * vy_gimbal;
-    *vy_set = sin_yaw * vx_gimbal - cos_yaw * vy_gimbal;
+    if (user_vx_set < CHASSIS_ACCEL_X_NUM && user_vx_set > -CHASSIS_ACCEL_X_NUM)
+    {
+        chassis_cmd_slow_set_vx.out = 0.0f;
+        chassis_cmd_slow_set_vx.input = 0.0f;
+    }
+
+    if (user_vy_set < CHASSIS_ACCEL_Y_NUM && user_vy_set > -CHASSIS_ACCEL_Y_NUM)
+    {
+        chassis_cmd_slow_set_vy.out = 0.0f;
+        chassis_cmd_slow_set_vy.input = 0.0f;
+    }
+
+    *vx_set = cos_yaw * vx_gimbal - sin_yaw * vy_gimbal;
+    *vy_set = sin_yaw * vx_gimbal + cos_yaw * vy_gimbal;
     *wz_set = user_wz_set;
 }
 

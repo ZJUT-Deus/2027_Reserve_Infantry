@@ -49,11 +49,11 @@ extern "C" {
 #define CHASSIS_CONTROL_TIME 0.002f
 
 /** @brief 速度环 PID Kp */
-#define CHASSIS_SPEED_PID_KP       2.0f
+#define CHASSIS_SPEED_PID_KP       1.8f
 /** @brief 速度环 PID Ki */
 #define CHASSIS_SPEED_PID_KI       0.0f
 /** @brief 速度环 PID Kd */
-#define CHASSIS_SPEED_PID_KD       0.3f
+#define CHASSIS_SPEED_PID_KD       0.2f
 /** @brief 速度环 PID Kf */
 #define CHASSIS_SPEED_PID_KF       0.0f
 /** @brief 速度环 PID 积分限幅 */
